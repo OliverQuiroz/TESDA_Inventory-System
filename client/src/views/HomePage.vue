@@ -12,14 +12,14 @@
         <div class="card text-center p-3">
           <i class="bi bi-clipboard"></i>
           <h4>70</h4>
-          <p>SE</p>
+          <p> (SE) Semi-Expendable</p>
         </div>
       </div>
       <div class="col-md-4">
         <div class="card text-center p-3">
           <i class="bi bi-clipboard"></i>
           <h4>30</h4>
-          <p>PPE</p>
+          <p> (PPE) Property-Plant & Equipment</p>
         </div>
       </div>
     </div>
