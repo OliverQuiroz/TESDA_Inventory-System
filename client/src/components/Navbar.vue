@@ -19,10 +19,10 @@
       <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
         <ul class="navbar-nav">
           <li class="nav-item">
-            <router-link class="nav-link" to="/">Home</router-link>
+            <router-link class="nav-link text-white" to="/">Home</router-link>
           </li>
           <li class="nav-item">
-            <router-link class="nav-link" to="/scan">Scan</router-link>
+            <router-link class="nav-link text-white" to="/scan">Scan</router-link>
           </li>
           <li class="nav-item">
             <button class="nav-link btn btn-link text-white" data-bs-toggle="modal" data-bs-target="#logoutModal">
