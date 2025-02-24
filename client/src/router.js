@@ -1,11 +1,12 @@
-import { createRouter, createWebHistory } from "vue-router";
-import Home from "@/views/HomePage.vue";
-import Scan from "@/views/ScanPage.vue";
-
+import { createRouter, createWebHistory } from 'vue-router';
+import HomePage from '@/views/HomePage.vue';
+import ScanPage from '@/views/ScanPage.vue';
+import LoginPage from '@/views/LoginPage.vue';  
 
 const routes = [
-  { path: "/", component: Home },
-  { path: "/scan", component: Scan },
+  { path: '/', component: HomePage },
+  { path: '/scan', component: ScanPage },
+  { path: '/login', component: LoginPage },  
 ];
 
 const router = createRouter({
