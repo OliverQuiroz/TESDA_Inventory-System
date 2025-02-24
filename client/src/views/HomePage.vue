@@ -39,7 +39,7 @@
           <th>Description</th>
           <th>Price</th>
           <th>Date of Purchase</th>
-          <th>Name of Recipient</th>
+          <th>Memorandum of Receipt (MR)</th>
           <th>Classification</th>
           <th>QR Code</th>
         </tr>
@@ -75,8 +75,14 @@
           </li>
         </ul>
       </nav>
-      <button class="btn btn-primary">Add Item</button>
-    </div>
+        <!-- Button to Open Add Item Modal -->
+        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addItemModal">
+          Add Item
+        </button>
+      </div>
+
+      <!-- Include the Add Item Modal -->
+      <AddItem />
 
     <!-- Modal for Item Details -->
     <div class="modal fade" id="itemModal" tabindex="-1" aria-labelledby="itemModalLabel" aria-hidden="true">
@@ -108,11 +114,16 @@
 </template>
 
 <script>
+import AddItem from '../components/AddItem.vue';
+
 import QRCode from "qrcode";
 import { Modal } from 'bootstrap';
 
 export default {
   name: "InventoryPage",
+  components:{
+    AddItem,
+  },
   data() {
     return {
       items: [],
