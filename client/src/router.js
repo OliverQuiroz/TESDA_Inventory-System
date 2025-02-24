@@ -1,12 +1,13 @@
 import { createRouter, createWebHistory } from 'vue-router';
-import HomePage from '@/views/HomePage.vue';
+import Home from '@/views/HomePage.vue';
+import Login from '@/views/LoginPage.vue';
 import ScanPage from '@/views/ScanPage.vue';
-import LoginPage from '@/views/LoginPage.vue';  
 
 const routes = [
-  { path: '/', component: HomePage },
-  { path: '/scan', component: ScanPage },
-  { path: '/login', component: LoginPage },  
+  { path: '/', redirect: '/login' }, // Redirect root to login
+  { path: '/login', name: 'Login', component: Login },
+  { path: '/home', name: 'Home', component: Home },
+  { path: '/scan', name: 'Scan', component: ScanPage }
 ];
 
 const router = createRouter({
