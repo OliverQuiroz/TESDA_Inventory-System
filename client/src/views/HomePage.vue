@@ -27,8 +27,8 @@
       </div>
     </div>
 
-    <div class="d-flex justify-content-between mb-3">
-      <input v-model="searchQuery" type="text" class="form-control w-25" placeholder="Search by Name, Inventory No, Recipient, Classification" />
+    <div class="d-flex justify-content-center mb-3">
+      <input v-model="searchQuery" type="text" class="form-control w-50 text-center" placeholder="Search" />
     </div>
 
     <table class="table table-bordered text-center">
@@ -127,7 +127,6 @@ export default {
   data() {
     return {
       items: [],
-      filteredItems: [],
       currentPage: 1,
       itemsPerPage: 5,
       searchQuery: "",
@@ -136,6 +135,19 @@ export default {
     };
   },
   computed: {
+    filteredItems() {
+      return this.items
+        .filter(item => this.selectedFilter === "all" || item.classification === this.selectedFilter)
+        .filter(item => {
+          const query = this.searchQuery.toLowerCase();
+          return (
+            item.productName.toLowerCase().includes(query) ||
+            item.inventoryNumber.toLowerCase().includes(query) ||
+            item.recipient.toLowerCase().includes(query) ||
+            item.classification.toLowerCase().includes(query)
+          );
+        });
+    },
     totalPages() {
       return Math.ceil(this.filteredItems.length / this.itemsPerPage);
     },
@@ -173,12 +185,10 @@ export default {
 
       Promise.all(data).then((resolvedData) => {
         this.items = resolvedData;
-        this.filteredItems = resolvedData;
       });
     },
     filterBy(type) {
       this.selectedFilter = type;
-      this.filteredItems = type === "all" ? this.items : this.items.filter(item => item.classification === type);
       this.currentPage = 1;
     },
     openModal(item) {
@@ -199,7 +209,8 @@ export default {
 };
 </script>
 
-<style scoped>
+<style>
+/* Clickable row */
 .clickable-row {
   cursor: pointer;
 }
@@ -212,5 +223,6 @@ export default {
 .filter-card:hover {
   background-color: #f8f9fa;
   transform: scale(1.05);
+  cursor: pointer; /* Makes it clear the card is clickable */
 }
 </style>
