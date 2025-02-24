@@ -37,9 +37,14 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    "rest_framework",
+    "rest_framework_simplejwt",
+    "corsheaders",  # Allows frontend to interact with backend
+    "login",
 ]
 
 MIDDLEWARE = [
+    "corsheaders.middleware.CorsMiddleware",  # Enable CORS
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -48,6 +53,43 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
+
+ALLOWED_HOSTS = ['127.0.0.1', 'localhost']
+
+# CORS SETTINGS
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:5173",     # Your Vue dev server
+    # "http://127.0.0.1:5173",
+    # Add more if needed
+]
+
+# Allow cookies to be sent in cross-site requests
+CORS_ALLOW_CREDENTIALS = True
+
+# CORS setup (allow frontend to connect)
+CORS_ALLOW_ALL_ORIGINS = True  # Set specific origins in production
+
+SESSION_COOKIE_SAMESITE = 'None'  # <-- crucial for cross-site cookies
+SESSION_COOKIE_SECURE = True     # or True if you're on HTTPS
+
+# Django REST Framework Setup
+REST_FRAMEWORK = {
+    "DEFAULT_AUTHENTICATION_CLASSES": (
+        "rest_framework_simplejwt.authentication.JWTAuthentication",
+    ),
+    "DEFAULT_PERMISSION_CLASSES": [
+        "rest_framework.permissions.IsAuthenticated",
+    ],
+}
+
+# Simple JWT settings
+from datetime import timedelta
+
+SIMPLE_JWT = {
+    "ACCESS_TOKEN_LIFETIME": timedelta(hours=12),  # Keeps user logged in for 12 hours
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
+    "AUTH_HEADER_TYPES": ("Bearer",),
+}
 
 ROOT_URLCONF = 'backend.urls'
 
@@ -75,8 +117,12 @@ WSGI_APPLICATION = 'backend.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'tesda',
+        'USER': 'root',
+        'PASSWORD': 'password',
+        'HOST': 'localhost', 
+        'PORT': '3306',
     }
 }
 

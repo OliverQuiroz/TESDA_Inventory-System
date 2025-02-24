@@ -11,13 +11,27 @@
         <!-- Login Form -->
         <form @submit.prevent="login">
           <div class="form-group">
-            <label for="email" class="form-label">Email</label>
-            <input id="email" type="email" v-model="email" class="form-control" placeholder="Enter email" required>
+            <label for="username" class="form-label">Username</label>
+            <input
+              id="username"
+              type="text"
+              v-model="username"
+              class="form-control"
+              placeholder="Enter username"
+              required
+            />
           </div>
 
           <div class="form-group">
             <label for="password" class="form-label">Password</label>
-            <input id="password" type="password" v-model="password" class="form-control" placeholder="Enter password" required>
+            <input
+              id="password"
+              type="password"
+              v-model="password"
+              class="form-control"
+              placeholder="Enter password"
+              required
+            />
           </div>
 
           <button type="submit" class="btn btn-dark w-100">Sign In</button>
@@ -39,28 +53,43 @@ import axios from "axios";
 import { useRouter } from "vue-router";
 
 export default {
+  name: "LoginPage",
   setup() {
-    const email = ref("");
+    // Reactive variables
+    const username = ref("");
     const password = ref("");
     const errorMessage = ref("");
+
+    // Access router instance from Vue Router
     const router = useRouter();
 
+    // Prevent scrolling issues on mount
     onMounted(() => {
-      document.body.style.overflow = "hidden"; // Prevents scrolling issues
+      document.body.style.overflow = "hidden";
     });
 
+    // Axios login function using username as input
     const login = async () => {
-      console.log("Logging in with:", { email: email.value, password: password.value });
-
+      console.log("Logging in with:", { username: username.value, password: password.value });
       try {
-        const response = await axios.post("http://127.0.0.1:8000/api/login/", {
-          email: email.value,
-          password: password.value,
-        });
+        const response = await axios.post(
+          "http://127.0.0.1:8000/api/login/",
+          {
+            // Although the label is "Username", your Django view expects the key "email".
+            // So we send the username value as "email".
+            email: username.value,
+            password: password.value,
+          },
+          { withCredentials: true } // Ensure cookies (session) are included
+        );
 
+        // Check for either a token or success flag from backend
         if (response.data.token) {
           localStorage.setItem("userToken", response.data.token);
-          router.push("/home"); // Redirect to home page after login
+          router.push("/home");
+        } else if (response.data.success) {
+          localStorage.setItem("isAuthenticated", "true");
+          router.push("/home");
         } else {
           errorMessage.value = "Invalid login credentials";
         }
@@ -70,13 +99,12 @@ export default {
       }
     };
 
-    return { email, password, errorMessage, login };
-  }
+    return { username, password, errorMessage, login };
+  },
 };
 </script>
 
 <style scoped>
-
 .login-container {
   display: flex;
   height: 100vh;
@@ -84,32 +112,28 @@ export default {
   align-items: center;
 }
 
-
 .login-image {
-  width: 40%; /* Prevent image from taking too much space */
+  width: 40%; /* Adjust width as needed */
   height: 100vh;
   background: url('@/assets/loginBg.png') no-repeat center center;
   background-size: cover;
 }
 
-
 .login-form {
-  width: 60%; /* Form takes the remaining space */
+  width: 60%; /* Form takes remaining space */
   display: flex;
-  justify-content: center; /* Ensures centering */
+  justify-content: center;
   align-items: center;
   background-color: white;
   padding: 4rem;
 }
 
-
 .form-content {
   width: 100%;
-  max-width: 500px; /* Ensures a well-sized form */
+  max-width: 500px;
   min-width: 400px;
   text-align: center;
 }
-
 
 .school-name {
   font-size: 24px;
@@ -117,7 +141,6 @@ export default {
   font-weight: bold;
   margin-bottom: 30px;
 }
-
 
 .form-group {
   width: 100%;
@@ -147,7 +170,6 @@ export default {
   box-shadow: 0 0 6px rgba(0, 123, 255, 0.3);
 }
 
-
 .btn-dark {
   padding: 14px;
   font-size: 17px;
@@ -161,32 +183,28 @@ export default {
   background-color: #23272b;
 }
 
-
 .forgot-password {
   text-decoration: none;
   color: #007bff;
   font-size: 14px;
 }
+
 .forgot-password:hover {
   text-decoration: underline;
 }
-
 
 @media (max-width: 992px) {
   .login-container {
     flex-direction: column;
   }
-  
   .login-image {
     width: 100%;
     height: 35vh;
   }
-
   .login-form {
     width: 100%;
     padding: 3rem;
   }
-
   .form-content {
     max-width: 400px;
   }
@@ -196,7 +214,6 @@ export default {
   .login-form {
     padding: 2rem;
   }
-  
   .form-content {
     max-width: 350px;
   }
