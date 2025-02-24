@@ -7,8 +7,6 @@
     <div class="login-form">
       <div class="form-content">
         <h3 class="school-name">JZGMSAT INVENTORY MANAGEMENT SYSTEM</h3>
-
-        <!-- Login Form -->
         <form @submit.prevent="login">
           <div class="form-group">
             <label for="username" class="form-label">Username</label>
@@ -21,7 +19,6 @@
               required
             />
           </div>
-
           <div class="form-group">
             <label for="password" class="form-label">Password</label>
             <input
@@ -33,11 +30,8 @@
               required
             />
           </div>
-
           <button type="submit" class="btn btn-dark w-100">Sign In</button>
-
           <div v-if="errorMessage" class="error-message">{{ errorMessage }}</div>
-
           <div class="text-center mt-3">
             <a href="#" class="forgot-password">Forgot password?</a>
           </div>
@@ -55,35 +49,28 @@ import { useRouter } from "vue-router";
 export default {
   name: "LoginPage",
   setup() {
-    // Reactive variables
     const username = ref("");
     const password = ref("");
     const errorMessage = ref("");
-
-    // Access router instance from Vue Router
     const router = useRouter();
 
-    // Prevent scrolling issues on mount
     onMounted(() => {
       document.body.style.overflow = "hidden";
     });
 
-    // Axios login function using username as input
     const login = async () => {
       console.log("Logging in with:", { username: username.value, password: password.value });
       try {
         const response = await axios.post(
           "http://127.0.0.1:8000/api/login/",
           {
-            // Although the label is "Username", your Django view expects the key "email".
-            // So we send the username value as "email".
+            // Send the username value as "email" to match Django view expectations.
             email: username.value,
             password: password.value,
           },
-          { withCredentials: true } // Ensure cookies (session) are included
+          { withCredentials: true }
         );
 
-        // Check for either a token or success flag from backend
         if (response.data.token) {
           localStorage.setItem("userToken", response.data.token);
           router.push("/home");
@@ -111,50 +98,43 @@ export default {
   width: 100vw;
   align-items: center;
 }
-
 .login-image {
-  width: 40%; /* Adjust width as needed */
+  width: 40%;
   height: 100vh;
   background: url('@/assets/loginBg.png') no-repeat center center;
   background-size: cover;
 }
-
 .login-form {
-  width: 60%; /* Form takes remaining space */
+  width: 60%;
   display: flex;
   justify-content: center;
   align-items: center;
   background-color: white;
   padding: 4rem;
 }
-
 .form-content {
   width: 100%;
   max-width: 500px;
   min-width: 400px;
   text-align: center;
 }
-
 .school-name {
   font-size: 24px;
   text-transform: uppercase;
   font-weight: bold;
   margin-bottom: 30px;
 }
-
 .form-group {
   width: 100%;
   margin-bottom: 20px;
   text-align: left;
 }
-
 .form-label {
   display: block;
   font-weight: bold;
   margin-bottom: 6px;
   font-size: 15px;
 }
-
 .form-control {
   width: 100%;
   padding: 14px;
@@ -163,13 +143,11 @@ export default {
   border-radius: 5px;
   transition: all 0.3s ease-in-out;
 }
-
 .form-control:focus {
   border-color: #007bff;
   outline: none;
   box-shadow: 0 0 6px rgba(0, 123, 255, 0.3);
 }
-
 .btn-dark {
   padding: 14px;
   font-size: 17px;
@@ -178,21 +156,17 @@ export default {
   background-color: #343a40;
   transition: 0.3s;
 }
-
 .btn-dark:hover {
   background-color: #23272b;
 }
-
 .forgot-password {
   text-decoration: none;
   color: #007bff;
   font-size: 14px;
 }
-
 .forgot-password:hover {
   text-decoration: underline;
 }
-
 @media (max-width: 992px) {
   .login-container {
     flex-direction: column;
@@ -209,7 +183,6 @@ export default {
     max-width: 400px;
   }
 }
-
 @media (max-width: 768px) {
   .login-form {
     padding: 2rem;

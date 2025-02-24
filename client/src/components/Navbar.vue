@@ -2,11 +2,10 @@
   <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
     <div class="container-fluid">
       <!-- BRAND/LOGO -->
-      <router-link class="navbar-brand d-flex align-items-center" to="/">
+      <router-link class="navbar-brand d-flex align-items-center" to="/home">
         <img src="@/assets/tesda.png" alt="Logo" class="me-2" height="70" />
         <span class="fw-bold">JZGMSAT</span>
       </router-link>
-
       <!-- TOGGLER (Mobile) -->
       <button
         class="navbar-toggler"
@@ -19,17 +18,15 @@
       >
         <span class="navbar-toggler-icon"></span>
       </button>
-
       <!-- NAV LINKS -->
       <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
         <ul class="navbar-nav">
           <li class="nav-item">
-            <router-link class="nav-link text-white" to="/">Home</router-link>
+            <router-link class="nav-link text-white" to="/home">Home</router-link>
           </li>
           <li class="nav-item">
             <router-link class="nav-link text-white" to="/scan">Scan</router-link>
           </li>
-          <!-- LOGOUT BUTTON triggers modal -->
           <li class="nav-item">
             <button
               class="nav-link btn btn-link text-white"
@@ -44,7 +41,7 @@
     </div>
   </nav>
 
-  <!-- LOGOUT CONFIRMATION MODAL -->
+  <!-- Logout Confirmation Modal -->
   <div
     class="modal fade"
     id="logoutModal"
@@ -62,14 +59,9 @@
           Are you sure you want to log out?
         </div>
         <div class="modal-footer">
-          <button
-            type="button"
-            class="btn btn-secondary"
-            data-bs-dismiss="modal"
-          >
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
             Cancel
           </button>
-          <!-- Actual logout call here -->
           <button
             type="button"
             class="btn btn-danger"
@@ -85,8 +77,6 @@
 </template>
 
 <script>
-import { useRouter } from "vue-router";
-
 export default {
   name: "Navbar",
   methods: {
@@ -97,10 +87,8 @@ export default {
           credentials: "include",
         });
         const data = await response.json();
-
         if (data.success) {
           localStorage.removeItem("isAuthenticated");
-          // Once we push '/', we see the login page
           this.$router.push("/");
         } else {
           alert(data.message || "Logout failed");
@@ -115,13 +103,5 @@ export default {
 </script>
 
 <style scoped>
-/* ✅ Ensures button is properly styled */
-.modal-footer .btn-danger {
-  background-color: #dc3545;
-  border: none;
-}
-
-.modal-footer .btn-danger:hover {
-  background-color: #c82333;
-}
+/* Additional styling if needed */
 </style>
