@@ -1,38 +1,28 @@
 <template>
   <div class="login-container">
-    <!-- Left Side: Proper Full-Height Background Image -->
+    <!-- Left Side: Background Image -->
     <div class="login-image"></div>
 
-    <!-- Right Side: Centered Login Form -->
+    <!-- Right Side: Login Form -->
     <div class="login-form">
       <div class="form-content">
-        <div class="text-center">
-          <!-- Logos: Properly Sized & Positioned -->
-          <div class="logos">
-            <img src="@/assets/jzgmsatLogo.png" alt="School Logo" class="logo">
-          </div>
-
-          <!-- School Name -->
-          <h3 class="school-name">JACOBO Z. GONZALES MEMORIAL SCHOOL OF ARTS AND TRADES</h3>
-        </div>
+        <h3 class="school-name">JZGMSAT INVENTORY MANAGEMENT SYSTEM</h3>
 
         <!-- Login Form -->
         <form @submit.prevent="login">
           <div class="form-group">
             <label for="email" class="form-label">Email</label>
-            <div class="input-group">
-              <input id="email" type="email" v-model="email" class="form-control" placeholder="Enter email" required>
-            </div>
+            <input id="email" type="email" v-model="email" class="form-control" placeholder="Enter email" required>
           </div>
 
           <div class="form-group">
             <label for="password" class="form-label">Password</label>
-            <div class="input-group">
-              <input id="password" type="password" v-model="password" class="form-control" placeholder="Enter password" required>
-            </div>
+            <input id="password" type="password" v-model="password" class="form-control" placeholder="Enter password" required>
           </div>
 
           <button type="submit" class="btn btn-dark w-100">Sign In</button>
+
+          <div v-if="errorMessage" class="error-message">{{ errorMessage }}</div>
 
           <div class="text-center mt-3">
             <a href="#" class="forgot-password">Forgot password?</a>
@@ -44,95 +34,107 @@
 </template>
 
 <script>
-import { ref } from "vue";
+import { ref, onMounted } from "vue";
+import axios from "axios";
+import { useRouter } from "vue-router";
 
 export default {
   setup() {
     const email = ref("");
     const password = ref("");
+    const errorMessage = ref("");
+    const router = useRouter();
 
-    const login = () => {
+    onMounted(() => {
+      document.body.style.overflow = "hidden"; // Prevents scrolling issues
+    });
+
+    const login = async () => {
       console.log("Logging in with:", { email: email.value, password: password.value });
-      // Add API authentication here
+
+      try {
+        const response = await axios.post("http://127.0.0.1:8000/api/login/", {
+          email: email.value,
+          password: password.value,
+        });
+
+        if (response.data.token) {
+          localStorage.setItem("userToken", response.data.token);
+          router.push("/home"); // Redirect to home page after login
+        } else {
+          errorMessage.value = "Invalid login credentials";
+        }
+      } catch (error) {
+        console.error("Login failed:", error.response?.data || error);
+        errorMessage.value = "Login failed. Please check your credentials.";
+      }
     };
 
-    return { email, password, login };
+    return { email, password, errorMessage, login };
   }
 };
 </script>
 
 <style scoped>
-/* Main Layout */
+
 .login-container {
   display: flex;
   height: 100vh;
   width: 100vw;
+  align-items: center;
 }
 
-/* Left Side: FIXED 50% WIDTH IMAGE */
+
 .login-image {
-  width: 50%; /* Ensures full half-page coverage */
+  width: 40%; /* Prevent image from taking too much space */
   height: 100vh;
-  background: url("@/assets/loginBg.png") no-repeat center center;
+  background: url('@/assets/loginBg.png') no-repeat center center;
   background-size: cover;
 }
 
-/* Right Side: Centered Login Form */
+
 .login-form {
-  width: 50%; /* Ensures the form takes exactly half of the screen */
+  width: 60%; /* Form takes the remaining space */
   display: flex;
-  flex-direction: column;
-  justify-content: center;
+  justify-content: center; /* Ensures centering */
   align-items: center;
   background-color: white;
-  padding: 4rem 3rem; /* Adjusted padding */
+  padding: 4rem;
 }
 
-/* Form Content */
+
 .form-content {
   width: 100%;
-  max-width: 400px; /* FINAL WIDTH FIX */
+  max-width: 500px; /* Ensures a well-sized form */
+  min-width: 400px;
   text-align: center;
 }
 
-/* Logos */
-.logos {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  margin-bottom: 15px;
-}
 
-.logo {
-  max-height: 170px; /* Fixed size for better alignment */
-}
-
-/* School Name */
 .school-name {
-  font-size: 23px;
+  font-size: 24px;
   text-transform: uppercase;
   font-weight: bold;
-  text-align: center;
-  margin-bottom: 25px;
+  margin-bottom: 30px;
 }
 
-/* Form Inputs */
+
 .form-group {
   width: 100%;
-  margin-bottom: 18px;
+  margin-bottom: 20px;
   text-align: left;
 }
 
 .form-label {
   display: block;
   font-weight: bold;
-  margin-bottom: 5px;
-  font-size: 14px;
+  margin-bottom: 6px;
+  font-size: 15px;
 }
 
 .form-control {
   width: 100%;
-  padding: 12px;
+  padding: 14px;
   font-size: 16px;
   border: 1px solid #ced4da;
   border-radius: 5px;
@@ -142,13 +144,13 @@ export default {
 .form-control:focus {
   border-color: #007bff;
   outline: none;
-  box-shadow: 0 0 5px rgba(0, 123, 255, 0.2);
+  box-shadow: 0 0 6px rgba(0, 123, 255, 0.3);
 }
 
-/* Button */
+
 .btn-dark {
   padding: 14px;
-  font-size: 18px;
+  font-size: 17px;
   font-weight: bold;
   border-radius: 5px;
   background-color: #343a40;
@@ -159,7 +161,7 @@ export default {
   background-color: #23272b;
 }
 
-/* Forgot Password */
+
 .forgot-password {
   text-decoration: none;
   color: #007bff;
@@ -169,21 +171,34 @@ export default {
   text-decoration: underline;
 }
 
-/* Mobile View */
+
 @media (max-width: 992px) {
   .login-container {
     flex-direction: column;
   }
+  
   .login-image {
     width: 100%;
-    height: 40vh;
+    height: 35vh;
   }
+
   .login-form {
     width: 100%;
-    padding: 5rem;
+    padding: 3rem;
   }
+
   .form-content {
-    max-width: 380px;
+    max-width: 400px;
+  }
+}
+
+@media (max-width: 768px) {
+  .login-form {
+    padding: 2rem;
+  }
+  
+  .form-content {
+    max-width: 350px;
   }
 }
 </style>

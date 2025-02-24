@@ -25,7 +25,12 @@
             <router-link class="nav-link text-white" to="/scan">Scan</router-link>
           </li>
           <li class="nav-item">
-            <button class="nav-link btn btn-link text-white" data-bs-toggle="modal" data-bs-target="#logoutModal">
+            <!-- ✅ Triggers modal when clicking logout -->
+            <button
+              class="nav-link btn btn-link text-white"
+              data-bs-toggle="modal"
+              data-bs-target="#logoutModal"
+            >
               Logout
             </button>
           </li>
@@ -34,7 +39,7 @@
     </div>
   </nav>
 
-  <!-- Logout Confirmation Modal -->
+  <!-- ✅ Logout Confirmation Modal -->
   <div class="modal fade" id="logoutModal" tabindex="-1" aria-labelledby="logoutModalLabel" aria-hidden="true">
     <div class="modal-dialog">
       <div class="modal-content">
@@ -55,16 +60,42 @@
 </template>
 
 <script>
+import { useRouter } from "vue-router";
+
 export default {
-  name: "Navbar",
-  methods: {
-    logout() {
-      this.$router.push("/logout");
-    }
+  setup() {
+    const router = useRouter();
+
+    const logout = () => {
+      localStorage.removeItem("userToken");
+      const modalElement = document.getElementById("logoutModal");
+      if (modalElement) {
+        const modalInstance = bootstrap.Modal.getInstance(modalElement);
+        if (modalInstance) {
+          modalInstance.hide();
+        }
+      }
+
+      
+      setTimeout(() => {
+        router.push("/login");
+        window.location.href = "/login"; 
+      }, 300);
+    };
+
+    return { logout };
   }
 };
 </script>
 
 <style scoped>
-/* Additional styling if needed */
+/* ✅ Ensures button is properly styled */
+.modal-footer .btn-danger {
+  background-color: #dc3545;
+  border: none;
+}
+
+.modal-footer .btn-danger:hover {
+  background-color: #c82333;
+}
 </style>
