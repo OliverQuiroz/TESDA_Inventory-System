@@ -36,7 +36,7 @@
           <th>Description</th>
           <th>Price</th>
           <th>Date of Purchase</th>
-          <th>Name of Recipient</th>
+          <th>Memorandum of Receipt (MR)</th>
           <th>Classification</th>
         </tr>
       </thead>
@@ -45,7 +45,7 @@
           <td>INV-{{ row }}</td>
           <td>Product {{ row }}</td>
           <td>Description of product {{ row }}</td>
-          <td>${{ (row * 10).toFixed(2) }}</td>
+          <td>₱ {{ (row * 10).toFixed(2) }}</td>
           <td>2024-02-{{ (row % 28) + 1 }}</td>
           <td>Recipient {{ row }}</td>
           <td>{{ row % 2 === 0 ? 'SE' : 'PPE' }}</td>
@@ -72,14 +72,25 @@
           </li>
         </ul>
       </nav>
-      <button class="btn btn-primary">Add Item</button>
-    </div>
+        <!-- Button to Open Add Item Modal -->
+        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addItemModal">
+          Add Item
+        </button>
+      </div>
+
+      <!-- Include the Add Item Modal -->
+      <AddItem />
   </div>
 </template>
 
 <script>
+import AddItem from '../components/AddItem.vue';
+
 export default {
-  name: "InventoryPage"
+  name: "InventoryPage",
+  components:{
+    AddItem,
+  },
 };
 </script>
 
