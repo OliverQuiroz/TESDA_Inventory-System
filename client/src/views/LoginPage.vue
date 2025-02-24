@@ -161,7 +161,7 @@ export default {
   background-color: #23272b;
 }
 
-/* ✅ FORGOT PASSWORD LINK */
+
 .forgot-password {
   text-decoration: none;
   color: #007bff;
