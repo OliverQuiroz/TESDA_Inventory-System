@@ -19,21 +19,33 @@
         <span class="navbar-toggler-icon"></span>
       </button>
       <!-- NAV LINKS -->
-      <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
-        <ul class="navbar-nav">
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav ms-auto align-items-center">
           <li class="nav-item">
-            <router-link class="nav-link text-white" to="/home">Home</router-link>
+            <router-link 
+              class="nav-link text-white" 
+              :class="{ 'active-route': $route.path === '/home' }" 
+              to="/home"
+            >
+              Home
+            </router-link>
           </li>
           <li class="nav-item">
-            <router-link class="nav-link text-white" to="/scan">Scan</router-link>
+            <router-link 
+              class="nav-link text-white" 
+              :class="{ 'active-route': $route.path === '/scan' }" 
+              to="/scan"
+            >
+              Scan
+            </router-link>
           </li>
           <li class="nav-item">
             <button
-              class="nav-link btn btn-link text-white"
+              class="nav-link btn btn-link text-white logout-btn"
               data-bs-toggle="modal"
               data-bs-target="#logoutModal"
             >
-              Logout
+              <i class="bi bi-box-arrow-right"></i> 
             </button>
           </li>
         </ul>
@@ -103,5 +115,29 @@ export default {
 </script>
 
 <style scoped>
-/* Additional styling if needed */
+.logout-btn {
+  transition: background-color 0.3s ease-in-out, color 0.3s ease-in-out;
+  padding: 5px 10px;
+  border-radius: 5px;
+}
+
+.logout-btn:hover {
+  background-color: var(--bs-danger) !important;
+  color: white !important;
+}
+
+.nav-link {
+  transition: background-color 0.3s ease-in-out, color 0.3s ease-in-out;
+  padding: 8px 12px;
+  border-radius: 5px;
+}
+
+.nav-link:hover {
+  background-color: rgba(255, 255, 255, 0.2);
+}
+
+.active-route {
+  font-weight: bold;
+  border-bottom: 2px solid white;
+}
 </style>

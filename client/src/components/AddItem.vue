@@ -124,7 +124,7 @@
           <div class="modal-body">
             Thank you! Your item has been added successfully.
           </div>
-          <div class="modal-footer">
+          <!-- <div class="modal-footer">
             <button
               type="button"
               class="btn btn-secondary"
@@ -133,7 +133,7 @@
             >
               Close
             </button>
-          </div>
+          </div> -->
         </div>
       </div>
     </div>

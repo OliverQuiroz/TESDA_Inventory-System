@@ -121,7 +121,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'tesda',
         'USER': 'root',
-        'PASSWORD': 'password',
+        'PASSWORD': 'pncuc48599',
         'HOST': 'localhost', 
         'PORT': '3306',
     }

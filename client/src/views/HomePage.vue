@@ -59,7 +59,7 @@
           <td>{{ item.product_name }}</td>
           <td>{{ item.description }}</td>
           <!-- Convert price to float before .toFixed() -->
-          <td>${{ parseFloat(item.price || 0).toFixed(2) }}</td>
+          <td>₱ {{ parseFloat(item.price || 0).toFixed(2) }}</td>
           <td>{{ item.date_of_purchase }}</td>
           <td>{{ item.recipient }}</td>
           <td>{{ item.classification }}</td>
@@ -154,7 +154,7 @@
             </p>
             <p>
               <strong>Price:</strong>
-              ${{ parseFloat(selectedItem?.price || 0).toFixed(2) }}
+              ₱ {{ parseFloat(selectedItem?.price || 0).toFixed(2) }}
             </p>
             <p>
               <strong>Date of Purchase:</strong>
@@ -180,10 +180,10 @@
           <div class="modal-footer">
             <button
               type="button"
-              class="btn btn-secondary"
+              class="btn btn-info"
               data-bs-dismiss="modal"
             >
-              Close
+              Edit
             </button>
           </div>
         </div>
