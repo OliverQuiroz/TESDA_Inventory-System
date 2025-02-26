@@ -1,0 +1,17 @@
+.modal-content {
+    background-color: #f8f9fa;
+    border-radius: 10px;
+  }
+  
+  /* Adjust floating labels */
+  .form-floating label {
+    color: #6c757d;
+    font-size: 14px;
+  }
+  
+  .form-floating input,
+  .form-floating select {
+    padding-top: 1rem;
+    padding-bottom: 1rem;
+  }
+  
