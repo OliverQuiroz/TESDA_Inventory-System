@@ -131,4 +131,4 @@ yarn-error.log*
 # (Update path to match your actual location in server)
 # Example: if located at server/backend/settings.py
 # -------------------------------
-server/backend/settings.py
+# server/backend/settings.py
