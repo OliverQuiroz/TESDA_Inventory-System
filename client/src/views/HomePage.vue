@@ -9,7 +9,6 @@
         </div>
       </div>
 
-      <!-- SE (Semi-Expendable) -->
       <div class="col-md-4">
         <div class="card text-center p-3 filter-card" @click="filterBy('SE')">
           <h4>{{ seCount }}</h4>
@@ -17,13 +16,13 @@
         </div>
       </div>
 
-      <!-- PPE (Property, Plant & Equipment) -->
       <div class="col-md-4">
         <div class="card text-center p-3 filter-card" @click="filterBy('PPE')">
           <h4>{{ ppeCount }}</h4>
           <p>(PPE) Property-Plant & Equipment</p>
         </div>
       </div>
+
     </div>
 
     <!-- Search box -->
@@ -253,8 +252,10 @@ export default {
       }
     },
     filterBy(type) {
-      this.selectedFilter = type;
-      this.currentPage = 1;
+      if (type === "SE" || type === "PPE" || type === "all") {
+        this.selectedFilter = type;
+        this.currentPage = 1;
+      }
     },
     openModal(item) {
       this.selectedItem = item;
