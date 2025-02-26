@@ -120,3 +120,15 @@ yarn-error.log*
 # -------------------------------
 .gitignore
 
+# -------------------------------
+# ADDITION: Ignore migrations
+# (includes __init__.py in migrations folder)
+# -------------------------------
+**/migrations/*
+
+# -------------------------------
+# ADDITION: Ignore settings.py
+# (Update path to match your actual location in server)
+# Example: if located at server/backend/settings.py
+# -------------------------------
+server/backend/settings.py
