@@ -83,8 +83,8 @@
               <div class="form-floating mb-3">
                 <!-- If your backend expects "SE"/"PPE", replace with those. -->
                 <select v-model="classification" class="form-select">
-                  <option value="semi-expendable">Semi-expendable</option>
-                  <option value="ppe">PPE</option>
+                  <option value="SE">(SE) Semi-Expendable</option>
+                  <option value="PPE">(PPE) Property, Plant & Equipment</option>
                 </select>
                 <label>Select Classification</label>
               </div>
