@@ -27,6 +27,12 @@ DEBUG = True
 
 ALLOWED_HOSTS = []
 
+import os
+
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
+
+
 
 # Application definition
 
@@ -121,7 +127,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'tesda',
         'USER': 'root',
-        'PASSWORD': 'password',
+        'PASSWORD': 'polinar@12345',
         'HOST': 'localhost', 
         'PORT': '3306',
     }

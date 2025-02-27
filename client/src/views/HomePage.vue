@@ -22,7 +22,6 @@
           <p>(PPE) Property-Plant & Equipment</p>
         </div>
       </div>
-
     </div>
 
     <!-- Search box -->
@@ -58,18 +57,17 @@
           <td>{{ item.inventory_number }}</td>
           <td>{{ item.product_name }}</td>
           <td>{{ item.description }}</td>
-          <!-- Convert price to float before .toFixed() -->
           <td>${{ parseFloat(item.price || 0).toFixed(2) }}</td>
           <td>{{ item.date_of_purchase }}</td>
           <td>{{ item.recipient }}</td>
           <td>{{ item.classification }}</td>
           <td>
-            <img
-              v-if="item.qr_code"
-              :src="item.qr_code"
-              alt="QR Code"
-              width="50"
-              height="50"
+            <img 
+              v-if="item.qr_code" 
+              :src="getFullImageUrl(item.qr_code)" 
+              alt="QR Code" 
+              width="50" 
+              height="50" 
             />
           </td>
         </tr>
@@ -117,7 +115,6 @@
     </div>
 
     <!-- Include the Add Item Modal -->
-    <!-- Listen for 'item-added' so we can refresh the list -->
     <AddItemModal @item-added="fetchItems" />
 
     <!-- Modal for Item Details -->
@@ -140,41 +137,20 @@
             ></button>
           </div>
           <div class="modal-body">
-            <p>
-              <strong>Inventory Number:</strong>
-              {{ selectedItem?.inventory_number }}
-            </p>
-            <p>
-              <strong>Product Name:</strong>
-              {{ selectedItem?.product_name }}
-            </p>
-            <p>
-              <strong>Description:</strong>
-              {{ selectedItem?.description }}
-            </p>
-            <p>
-              <strong>Price:</strong>
-              ${{ parseFloat(selectedItem?.price || 0).toFixed(2) }}
-            </p>
-            <p>
-              <strong>Date of Purchase:</strong>
-              {{ selectedItem?.date_of_purchase }}
-            </p>
-            <p>
-              <strong>Recipient:</strong>
-              {{ selectedItem?.recipient }}
-            </p>
-            <p>
-              <strong>Classification:</strong>
-              {{ selectedItem?.classification }}
-            </p>
+            <p><strong>Inventory Number:</strong> {{ selectedItem?.inventory_number }}</p>
+            <p><strong>Product Name:</strong> {{ selectedItem?.product_name }}</p>
+            <p><strong>Description:</strong> {{ selectedItem?.description }}</p>
+            <p><strong>Price:</strong> ${{ parseFloat(selectedItem?.price || 0).toFixed(2) }}</p>
+            <p><strong>Date of Purchase:</strong> {{ selectedItem?.date_of_purchase }}</p>
+            <p><strong>Recipient:</strong> {{ selectedItem?.recipient }}</p>
+            <p><strong>Classification:</strong> {{ selectedItem?.classification }}</p>
             <p><strong>QR Code:</strong></p>
-            <img
-              v-if="selectedItem?.qr_code"
-              :src="selectedItem.qr_code"
-              alt="QR Code"
-              width="100"
-              height="100"
+            <img 
+              v-if="selectedItem?.qr_code" 
+              :src="getFullImageUrl(selectedItem.qr_code)" 
+              alt="QR Code" 
+              width="100" 
+              height="100" 
             />
           </div>
           <div class="modal-footer">
@@ -252,10 +228,8 @@ export default {
       }
     },
     filterBy(type) {
-      if (type === "SE" || type === "PPE" || type === "all") {
-        this.selectedFilter = type;
-        this.currentPage = 1;
-      }
+      this.selectedFilter = type;
+      this.currentPage = 1;
     },
     openModal(item) {
       this.selectedItem = item;
@@ -268,9 +242,11 @@ export default {
         this.currentPage = page;
       }
     },
+    getFullImageUrl(path) {
+      return `http://127.0.0.1:8000${path}`;
+    }
   },
   async mounted() {
-    // fetch existing items from the backend on mount
     await this.fetchItems();
   },
 };

@@ -6,3 +6,4 @@ urlpatterns = [
     # /api/items/ -> GET, POST
     path('items/', items_view, name='items_view'),
 ]
+
