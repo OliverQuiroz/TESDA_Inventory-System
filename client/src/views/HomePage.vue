@@ -105,13 +105,13 @@
       </nav>
 
       <!-- Button to Open Add Item Modal -->
-      <button
-        class="btn btn-primary"
-        data-bs-toggle="modal"
-        data-bs-target="#addItemModal"
-      >
-        Add Item
-      </button>
+      <button 
+  class="btn btn-primary" 
+  @click="openAddItemModal"
+>
+  Add Item
+</button>
+
     </div>
 
     <!-- Include the Add Item Modal -->
@@ -244,13 +244,23 @@ export default {
     },
     getFullImageUrl(path) {
       return `http://127.0.0.1:8000${path}`;
-    }
+    },
+
+    // ✅ Added openAddItemModal method (without removing anything)
+    openAddItemModal() {
+      document.querySelectorAll(".modal-backdrop").forEach(backdrop => backdrop.remove());
+      const addItemModalEl = document.getElementById("addItemModal");
+      if (addItemModalEl) {
+        new Modal(addItemModalEl).show();
+      }
+    },
   },
   async mounted() {
     await this.fetchItems();
   },
 };
 </script>
+
 
 <style>
 .clickable-row {

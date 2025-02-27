@@ -87,7 +87,7 @@
 </template>
 
 <script>
-import { ref } from "vue";
+import { ref, onMounted } from "vue";
 import { Modal } from "bootstrap";
 
 export default {
@@ -126,9 +126,9 @@ export default {
         }
 
         const data = await response.json();
-        qrCodeUrl.value = data.qr_code;
+        qrCodeUrl.value = data.qr_code; // ✅ Preserve QR Code for confirmation modal
 
-        // Hide Add Item modal if it's still open
+        // Hide Add Item modal
         const addItemModalEl = document.getElementById("addItemModal");
         const addItemModalInstance = Modal.getInstance(addItemModalEl);
         if (addItemModalInstance) {
@@ -141,7 +141,7 @@ export default {
         // Emit event to refresh items in HomePage.vue
         emit("item-added");
 
-        // Clear input fields
+        // Clear input fields BUT DO NOT reset qrCodeUrl
         inventoryNumber.value = "";
         productName.value = "";
         description.value = "";
@@ -149,23 +149,33 @@ export default {
         purchaseDate.value = "";
         recipient.value = "";
         classification.value = "";
+        // ❌ Do NOT reset qrCodeUrl to preserve the QR code in the confirmation modal
       } catch (error) {
         console.error("Add item error:", error);
       }
     };
 
     const handleSuccessModalClose = () => {
-      // Hide the Add Item modal too, just in case it hasn't been closed yet
-      const addItemModalEl = document.getElementById("addItemModal");
-      const addItemModalInstance = Modal.getInstance(addItemModalEl);
-      if (addItemModalInstance) {
-        addItemModalInstance.hide();
-      }
+      // Remove Bootstrap leftover backdrops
+      setTimeout(() => {
+        document.body.classList.remove("modal-open");
+        document.querySelectorAll(".modal-backdrop").forEach(backdrop => backdrop.remove());
+      }, 200);
+
+      // ✅ Reset QR code only when the success modal is fully closed
+      qrCodeUrl.value = null;
     };
 
     const getFullImageUrl = (path) => {
       return `http://127.0.0.1:8000${path}`;
     };
+
+    onMounted(() => {
+      const successModalEl = document.getElementById("addItemSuccessModal");
+      if (successModalEl) {
+        successModalEl.addEventListener("hidden.bs.modal", handleSuccessModalClose);
+      }
+    });
 
     return { 
       inventoryNumber, 
@@ -178,7 +188,7 @@ export default {
       qrCodeUrl, 
       addItem, 
       handleSuccessModalClose,
-      getFullImageUrl 
+      getFullImageUrl
     };
   },
 };
