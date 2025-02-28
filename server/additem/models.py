@@ -1,4 +1,7 @@
 from django.db import models
+import qrcode
+from io import BytesIO
+from django.core.files.base import ContentFile
 
 class Item(models.Model):
     inventory_number = models.CharField(max_length=100)
@@ -12,10 +15,24 @@ class Item(models.Model):
         ("SE", "Semi-Expendable"),
         ("PPE", "Property, Plant & Equipment"),
     ]
-    
     classification = models.CharField(
         max_length=10, choices=CLASSIFICATION_CHOICES, default="SE"
-    )  # Now only "SE" or "PPE" will be stored
+    )
+
+    qr_code = models.ImageField(upload_to='qr_codes/', blank=True, null=True)  # New field
+
+    def generate_qr_code(self):
+        qr_data = f"Inventory No: {self.inventory_number}\nProduct: {self.product_name}\nDescription: {self.description}\nPrice: {self.price}\nDate: {self.date_of_purchase}\nRecipient: {self.recipient}\nClassification: {self.classification}"
+        qr = qrcode.make(qr_data)
+
+        buffer = BytesIO()
+        qr.save(buffer, format="PNG")
+        self.qr_code.save(f"{self.inventory_number}_qr.png", ContentFile(buffer.getvalue()), save=False)
+
+    def save(self, *args, **kwargs):
+        if not self.qr_code:  # Generate QR code if not already created
+            self.generate_qr_code()
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return f"{self.inventory_number} - {self.product_name}"

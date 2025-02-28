@@ -22,7 +22,6 @@
           <p>(PPE) Property-Plant & Equipment</p>
         </div>
       </div>
-
     </div>
 
     <!-- Search box -->
@@ -35,6 +34,7 @@
       />
     </div>
 
+    <!-- Items Table -->
     <table class="table table-bordered text-center">
       <thead>
         <tr>
@@ -54,11 +54,12 @@
           :key="index"
           @click="openModal(item)"
           class="clickable-row"
+          :class="{ 'table-success animate-highlight': item.id === updatedItemId }"
         >
           <td>{{ item.inventory_number }}</td>
           <td>{{ item.product_name }}</td>
           <td>{{ item.description }}</td>
-          <!-- Convert price to float before .toFixed() -->
+          <!-- Use ₱ symbol and ensure we display two decimals -->
           <td>₱ {{ parseFloat(item.price || 0).toFixed(2) }}</td>
           <td>{{ item.date_of_purchase }}</td>
           <td>{{ item.recipient }}</td>
@@ -66,7 +67,7 @@
           <td>
             <img
               v-if="item.qr_code"
-              :src="item.qr_code"
+              :src="getFullImageUrl(item.qr_code)"
               alt="QR Code"
               width="50"
               height="50"
@@ -106,21 +107,19 @@
         </ul>
       </nav>
 
-      <!-- Button to Open Add Item Modal -->
-      <button
-        class="btn btn-primary"
-        data-bs-toggle="modal"
-        data-bs-target="#addItemModal"
+      <!-- Button to Open Add Item Modal (programmatic) -->
+      <button 
+        class="btn btn-primary" 
+        @click="openAddItemModal"
       >
         Add Item
       </button>
     </div>
 
-    <!-- Include the Add Item Modal -->
-    <!-- Listen for 'item-added' so we can refresh the list -->
+    <!-- Add Item Modal Component -->
     <AddItemModal @item-added="fetchItems" />
 
-    <!-- Modal for Item Details -->
+    <!-- Item Details Modal -->
     <div
       class="modal fade"
       id="itemModal"
@@ -129,92 +128,102 @@
       aria-hidden="true"
     >
       <div class="modal-dialog">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title">Item Details</h5>
+        <div class="modal-content p-4">
+          <div class="modal-header border-0 text-center d-flex flex-column w-100">
+            <h5 class="modal-title fw-bold text-center w-100">ITEM DETAILS</h5>
             <button
               type="button"
-              class="btn-close"
+              class="btn-close position-absolute end-0 me-3"
               data-bs-dismiss="modal"
               aria-label="Close"
             ></button>
           </div>
           <div class="modal-body">
-            <p>
-              <strong>Inventory Number:</strong>
-              {{ selectedItem?.inventory_number }}
-            </p>
-            <p>
-              <strong>Product Name:</strong>
-              {{ selectedItem?.product_name }}
-            </p>
-            <p>
-              <strong>Description:</strong>
-              {{ selectedItem?.description }}
-            </p>
-            <p>
-              <strong>Price:</strong>
-              ₱ {{ parseFloat(selectedItem?.price || 0).toFixed(2) }}
-            </p>
-            <p>
-              <strong>Date of Purchase:</strong>
-              {{ selectedItem?.date_of_purchase }}
-            </p>
-            <p>
-              <strong>Recipient:</strong>
-              {{ selectedItem?.recipient }}
-            </p>
-            <p>
-              <strong>Classification:</strong>
-              {{ selectedItem?.classification }}
-            </p>
-            <p><strong>QR Code:</strong></p>
-            <img
-              v-if="selectedItem?.qr_code"
-              :src="selectedItem.qr_code"
-              alt="QR Code"
-              width="100"
-              height="100"
-            />
+            <div class="row">
+              <!-- Labels Column -->
+              <div class="col-md-6 text-start fw-bold">
+                <p>Inventory Number:</p>
+                <p>Product Name:</p>
+                <p>Description:</p>
+                <p>Price:</p>
+                <p>Date of Purchase:</p>
+                <p>Memorandum of Receipt:</p>
+                <p>Classification:</p>
+                <p>QR Code:</p>
+              </div>
+
+              <!-- Data Column -->
+              <div class="col-md-6 text-start">
+                <p>{{ selectedItem?.inventory_number }}</p>
+                <p>{{ selectedItem?.product_name }}</p>
+                <p>{{ selectedItem?.description }}</p>
+                <p>₱ {{ parseFloat(selectedItem?.price || 0).toFixed(2) }}</p>
+                <p>{{ selectedItem?.date_of_purchase }}</p>
+                <p>{{ selectedItem?.recipient }}</p>
+                <p>{{ selectedItem?.classification }}</p>
+                <p>
+                  <img
+                    v-if="selectedItem?.qr_code"
+                    :src="getFullImageUrl(selectedItem.qr_code)"
+                    alt="QR Code"
+                    width="100"
+                    height="100"
+                  />
+                </p>
+              </div>
+            </div>
           </div>
           <div class="modal-footer">
+            <!-- Button triggers EditItem modal -->
             <button
               type="button"
               class="btn btn-info"
+              @click="openEditModal()"
               data-bs-dismiss="modal"
             >
-              Edit
+              <i class="bi bi-pencil"></i> Edit
             </button>
           </div>
         </div>
       </div>
     </div>
+
+    <!-- Edit Item Modal Component -->
+    <EditItem :selectedItem="selectedItem" @item-updated="fetchItems" />
   </div>
 </template>
 
 <script>
 import AddItemModal from "@/components/AddItem.vue";
+import EditItem from "@/components/EditItem.vue";
 import { Modal } from "bootstrap";
 
 export default {
   name: "HomePage",
   components: {
     AddItemModal,
+    EditItem,
   },
   data() {
     return {
       items: [],
+      updatedItemId: null,    // To highlight the last-updated item
       currentPage: 1,
       itemsPerPage: 5,
       searchQuery: "",
       selectedFilter: "all",
-      selectedItem: null,
+      selectedItem: {},
     };
   },
   computed: {
     filteredItems() {
+      // Filter by classification + search
       return this.items
-        .filter((item) => this.selectedFilter === "all" || item.classification === this.selectedFilter)
+        .filter(
+          (item) =>
+            this.selectedFilter === "all" ||
+            item.classification === this.selectedFilter
+        )
         .filter((item) => {
           const query = this.searchQuery.toLowerCase();
           return (
@@ -240,37 +249,69 @@ export default {
     },
   },
   methods: {
-    async fetchItems() {
+    async fetchItems(updatedItemId = null) {
       try {
         const response = await fetch("http://127.0.0.1:8000/api/items/");
         if (!response.ok) {
           throw new Error("Failed to fetch items");
         }
         this.items = await response.json();
+
+        // Highlight a newly-updated item
+        if (updatedItemId) {
+          this.updatedItemId = updatedItemId;
+          setTimeout(() => {
+            this.updatedItemId = null;
+          }, 3000);
+        }
       } catch (error) {
         console.error("fetchItems error:", error);
       }
     },
     filterBy(type) {
-      if (type === "SE" || type === "PPE" || type === "all") {
-        this.selectedFilter = type;
-        this.currentPage = 1;
-      }
+      this.selectedFilter = type;
+      this.currentPage = 1;
     },
     openModal(item) {
-      this.selectedItem = item;
+      this.selectedItem = item || {};
       const modalElement = document.getElementById("itemModal");
       const modal = new Modal(modalElement);
       modal.show();
+    },
+    openEditModal() {
+      // Copy the selected item into the EditItem component
+      this.$nextTick(() => {
+        const editModalEl = document.getElementById("editItemModal");
+        if (!editModalEl) {
+          console.error("Error: EditItem modal element not found!");
+          return;
+        }
+        const editModal = new Modal(editModalEl, { backdrop: "static" });
+        editModal.show();
+      });
+    },
+    openAddItemModal() {
+      // Programmatically open the AddItem modal
+      document.querySelectorAll(".modal-backdrop").forEach((backdrop) =>
+        backdrop.remove()
+      );
+      const addItemModalEl = document.getElementById("addItemModal");
+      if (addItemModalEl) {
+        new Modal(addItemModalEl).show();
+      }
     },
     changePage(page) {
       if (page >= 1 && page <= this.totalPages) {
         this.currentPage = page;
       }
     },
+    getFullImageUrl(path) {
+      // Convert relative path to full server URL
+      return `http://127.0.0.1:8000${path}`;
+    },
   },
   async mounted() {
-    // fetch existing items from the backend on mount
+    // Load items at start
     await this.fetchItems();
   },
 };
@@ -287,5 +328,17 @@ export default {
 .filter-card:hover {
   background-color: #f8f9fa;
   transform: scale(1.05);
+}
+/* Fade highlight animation */
+@keyframes fadeHighlight {
+  0% {
+    background-color: #ff94df;
+  }
+  100% {
+    background-color: transparent;
+  }
+}
+.animate-highlight {
+  animation: fadeHighlight 0.1s ease-in-out;
 }
 </style>

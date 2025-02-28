@@ -1,8 +1,10 @@
-# additem/urls.py
 from django.urls import path
-from .views import items_view
+from .views import items_view, item_detail_view
 
 urlpatterns = [
-    # /api/items/ -> GET, POST
+    # GET all items or POST a new item
     path('items/', items_view, name='items_view'),
+
+    # GET/PUT/DELETE a single item
+    path('items/<int:pk>/', item_detail_view, name='item_detail_view'),
 ]
