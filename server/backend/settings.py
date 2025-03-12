@@ -27,6 +27,14 @@ DEBUG = True
 
 ALLOWED_HOSTS = []
 
+import os
+from pathlib import Path
+
+BASE_DIR = Path(__file__).resolve().parent.parent
+
+# Media settings
+MEDIA_URL = '/media/'  # URL prefix for serving media files
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')  # Actual folder path in your project
 
 # Application definition
 
@@ -121,7 +129,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'tesda',
         'USER': 'root',
-        'PASSWORD': 'pncuc48599',
+        'PASSWORD': 'password',
         'HOST': 'localhost', 
         'PORT': '3306',
     }
