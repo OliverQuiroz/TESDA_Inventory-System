@@ -1,5 +1,5 @@
 from django.db import models
-import qrcode
+import qrcode # type: ignore
 from io import BytesIO
 from django.core.files.base import ContentFile
 

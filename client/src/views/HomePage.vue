@@ -59,8 +59,7 @@
           <td>{{ item.inventory_number }}</td>
           <td>{{ item.product_name }}</td>
           <td>{{ item.description }}</td>
-          <!-- Use ₱ symbol and ensure we display two decimals -->
-          <td>₱ {{ parseFloat(item.price || 0).toFixed(2) }}</td>
+          <td>₱ {{ formatPrice(item.price) }}</td>
           <td>{{ item.date_of_purchase }}</td>
           <td>{{ item.recipient }}</td>
           <td>{{ item.classification }}</td>
@@ -107,7 +106,7 @@
         </ul>
       </nav>
 
-      <!-- Button to Open Add Item Modal (programmatic) -->
+      <!-- Button to Open Add Item Modal -->
       <button 
         class="btn btn-primary" 
         @click="openAddItemModal"
@@ -119,74 +118,11 @@
     <!-- Add Item Modal Component -->
     <AddItemModal @item-added="fetchItems" />
 
-    <!-- Item Details Modal -->
-    <div
-      class="modal fade"
-      id="itemModal"
-      tabindex="-1"
-      aria-labelledby="itemModalLabel"
-      aria-hidden="true"
-    >
-      <div class="modal-dialog">
-        <div class="modal-content p-4">
-          <div class="modal-header border-0 text-center d-flex flex-column w-100">
-            <h5 class="modal-title fw-bold text-center w-100">ITEM DETAILS</h5>
-            <button
-              type="button"
-              class="btn-close position-absolute end-0 me-3"
-              data-bs-dismiss="modal"
-              aria-label="Close"
-            ></button>
-          </div>
-          <div class="modal-body">
-            <div class="row">
-              <!-- Labels Column -->
-              <div class="col-md-6 text-start fw-bold">
-                <p>Inventory Number:</p>
-                <p>Product Name:</p>
-                <p>Description:</p>
-                <p>Price:</p>
-                <p>Date of Purchase:</p>
-                <p>Memorandum of Receipt:</p>
-                <p>Classification:</p>
-                <p>QR Code:</p>
-              </div>
-
-              <!-- Data Column -->
-              <div class="col-md-6 text-start">
-                <p>{{ selectedItem?.inventory_number }}</p>
-                <p>{{ selectedItem?.product_name }}</p>
-                <p>{{ selectedItem?.description }}</p>
-                <p>₱ {{ parseFloat(selectedItem?.price || 0).toFixed(2) }}</p>
-                <p>{{ selectedItem?.date_of_purchase }}</p>
-                <p>{{ selectedItem?.recipient }}</p>
-                <p>{{ selectedItem?.classification }}</p>
-                <p>
-                  <img
-                    v-if="selectedItem?.qr_code"
-                    :src="getFullImageUrl(selectedItem.qr_code)"
-                    alt="QR Code"
-                    width="100"
-                    height="100"
-                  />
-                </p>
-              </div>
-            </div>
-          </div>
-          <div class="modal-footer">
-            <!-- Button triggers EditItem modal -->
-            <button
-              type="button"
-              class="btn btn-info"
-              @click="openEditModal()"
-              data-bs-dismiss="modal"
-            >
-              <i class="bi bi-pencil"></i> Edit
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
+    <!-- Item Details as a separate component -->
+    <ItemDetails 
+      :selectedItem="selectedItem" 
+      @edit-requested="openEditModal" 
+    />
 
     <!-- Edit Item Modal Component -->
     <EditItem :selectedItem="selectedItem" @item-updated="fetchItems" />
@@ -196,6 +132,7 @@
 <script>
 import AddItemModal from "@/components/AddItem.vue";
 import EditItem from "@/components/EditItem.vue";
+import ItemDetails from "@/components/ItemDetails.vue";
 import { Modal } from "bootstrap";
 
 export default {
@@ -203,11 +140,12 @@ export default {
   components: {
     AddItemModal,
     EditItem,
+    ItemDetails,
   },
   data() {
     return {
       items: [],
-      updatedItemId: null,    // To highlight the last-updated item
+      updatedItemId: null,
       currentPage: 1,
       itemsPerPage: 5,
       searchQuery: "",
@@ -217,22 +155,27 @@ export default {
   },
   computed: {
     filteredItems() {
-      // Filter by classification + search
-      return this.items
-        .filter(
-          (item) =>
-            this.selectedFilter === "all" ||
-            item.classification === this.selectedFilter
-        )
-        .filter((item) => {
-          const query = this.searchQuery.toLowerCase();
-          return (
-            item.product_name.toLowerCase().includes(query) ||
-            item.inventory_number.toLowerCase().includes(query) ||
-            item.recipient.toLowerCase().includes(query) ||
-            item.classification.toLowerCase().includes(query)
-          );
-        });
+      let filtered = this.items.filter(
+        (item) =>
+          this.selectedFilter === "all" ||
+          item.classification === this.selectedFilter
+      );
+
+      // search filter
+      filtered = filtered.filter((item) => {
+        const query = this.searchQuery.toLowerCase();
+        return (
+          item.product_name.toLowerCase().includes(query) ||
+          item.inventory_number.toLowerCase().includes(query) ||
+          item.recipient.toLowerCase().includes(query) ||
+          item.classification.toLowerCase().includes(query)
+        );
+      });
+
+      // Sort descending so new items appear first
+      filtered.sort((a, b) => b.id - a.id);
+
+      return filtered;
     },
     totalPages() {
       return Math.ceil(this.filteredItems.length / this.itemsPerPage);
@@ -256,6 +199,7 @@ export default {
           throw new Error("Failed to fetch items");
         }
         this.items = await response.json();
+        this.currentPage = 1; // Jump back to page 1
 
         // Highlight a newly-updated item
         if (updatedItemId) {
@@ -272,14 +216,15 @@ export default {
       this.selectedFilter = type;
       this.currentPage = 1;
     },
+    // Show the details modal
     openModal(item) {
       this.selectedItem = item || {};
       const modalElement = document.getElementById("itemModal");
       const modal = new Modal(modalElement);
       modal.show();
     },
+    // Trigger the edit item modal
     openEditModal() {
-      // Copy the selected item into the EditItem component
       this.$nextTick(() => {
         const editModalEl = document.getElementById("editItemModal");
         if (!editModalEl) {
@@ -290,8 +235,8 @@ export default {
         editModal.show();
       });
     },
+    // Programmatically open the AddItem modal
     openAddItemModal() {
-      // Programmatically open the AddItem modal
       document.querySelectorAll(".modal-backdrop").forEach((backdrop) =>
         backdrop.remove()
       );
@@ -306,12 +251,17 @@ export default {
       }
     },
     getFullImageUrl(path) {
-      // Convert relative path to full server URL
       return `http://127.0.0.1:8000${path}`;
+    },
+    formatPrice(value) {
+      const num = parseFloat(value) || 0;
+      return new Intl.NumberFormat("en-US", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      }).format(num);
     },
   },
   async mounted() {
-    // Load items at start
     await this.fetchItems();
   },
 };
