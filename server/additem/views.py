@@ -9,7 +9,7 @@ from .serializers import ItemSerializer
 def items_view(request):
     """
     GET -> Returns a list of all Items
-    POST -> Creates a new Item
+    POST -> Creates a new Item (Prevents duplicate inventory numbers only)
     """
     if request.method == 'GET':
         items = Item.objects.all().order_by('id')
@@ -17,19 +17,22 @@ def items_view(request):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     elif request.method == 'POST':
-        serializer = ItemSerializer(data=request.data)
+        data = request.data
+        inventory_number = data.get("inventory_number")
+
+        # ✅ Check for duplicate inventory number (Product name can be the same)
+        if Item.objects.filter(inventory_number=inventory_number).exists():
+            return Response({"error": "Item with this inventory number already exists!"}, status=status.HTTP_400_BAD_REQUEST)
+
+        # If no duplicate inventory number, save the item
+        serializer = ItemSerializer(data=data)
         if serializer.is_valid():
             item = serializer.save()
-            # If item has a qr_code field (ImageField), return its URL
-            qr_code_url = item.qr_code.url if item.qr_code else None
-            return Response(
-                {
-                    "message": "Item added successfully",
-                    "qr_code": qr_code_url
-                },
-                status=status.HTTP_201_CREATED
-            )
+            return Response({"message": "Item added successfully!", "qr_code": item.qr_code.url if item.qr_code else None}, status=status.HTTP_201_CREATED)
+
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
 
 
 @api_view(['GET', 'PUT', 'DELETE'])
