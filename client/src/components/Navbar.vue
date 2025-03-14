@@ -1,6 +1,6 @@
 <template>
   <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
-    <div class="container-fluid">
+    <div class="container">
       <!-- BRAND/LOGO -->
       <router-link class="navbar-brand d-flex align-items-center" to="/home">
         <img src="@/assets/tesda.png" alt="Logo" class="me-2" height="70" />
@@ -124,6 +124,11 @@ export default {
 .logout-btn:hover {
   background-color: var(--bs-danger) !important;
   color: white !important;
+}
+
+.navbar .container {
+  padding-left: 20px;
+  padding-right: 20px;
 }
 
 .nav-link {
