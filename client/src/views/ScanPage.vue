@@ -3,8 +3,8 @@
     <h3>QR SCAN</h3>
 
     <div v-if="!scannedItem">
-      <div class="mb-3">
-        <button class="btn btn-primary me-2" @click="startScan" v-if="!isScanning">
+      <div class="d-flex justify-content-center mb-3">
+        <button class="btn btn-primary" @click="startScan" v-if="!isScanning">
           Start Scanning
         </button>
         <button class="btn btn-secondary" @click="stopScan" v-if="isScanning">
@@ -16,49 +16,58 @@
         <video ref="videoRef" style="width: 100%; height: auto;" playsinline muted></video>
       </div>
 
-      <p v-if="scanError" class="alert alert-danger mt-2">
+      <p v-if="scanError" class="alert alert-danger mt-2 text-center">
         {{ scanError }}
       </p>
     </div>
 
+
     <div v-else class="card p-3 mt-3 scanned-item-container">
-  <h5 class="text-center">Scanned Item Details</h5>
-  <p><strong>ID:</strong> {{ scannedItem.id }}</p>
-  <p><strong>Product Name:</strong> {{ scannedItem.product_name }}</p>
-  <p><strong>Description:</strong> {{ scannedItem.description }}</p>
-  <p><strong>Price:</strong> ₱ {{ formatPrice(scannedItem.price) }}</p>
-  <p><strong>Date of Purchase:</strong> {{ scannedItem.date_of_purchase }}</p>
-  <p><strong>Recipient:</strong> {{ scannedItem.recipient }}</p>
-  <p><strong>Classification:</strong> {{ scannedItem.classification }}</p>
+      <h5 class="text-center">Scanned Item Details</h5>
+      <p><strong>ID:</strong> {{ scannedItem.id }}</p>
+      <p><strong>Product Name:</strong> {{ scannedItem.product_name }}</p>
+      <p><strong>Description:</strong> {{ scannedItem.description }}</p>
+      <p><strong>Price:</strong> ₱ {{ formatPrice(scannedItem.price) }}</p>
+      <p><strong>Date of Purchase:</strong> {{ scannedItem.date_of_purchase }}</p>
+      <p><strong>Recipient:</strong> {{ scannedItem.recipient }}</p>
+      <p><strong>Classification:</strong> {{ scannedItem.classification }}</p>
 
-  <div v-if="scannedItem.qr_code" class="mt-2 text-center">
-    <img :src="getFullImageUrl(scannedItem.qr_code)" alt="QR Code" width="100" height="100" class="border rounded">
-  </div>
+      <div v-if="scannedItem.qr_code" class="mt-2 text-center">
+        <img :src="getFullImageUrl(scannedItem.qr_code)" alt="QR Code" width="100" height="100" class="border rounded">
+      </div>
 
-  <div class="mt-3 d-flex justify-content-center">
-    <button class="btn btn-info me-2" @click="editItem(scannedItem)">Edit Item</button>
-    <button class="btn btn-secondary" @click="resetScan">Scan Again</button>
-  </div>
-</div>
+      <div class="mt-3 d-flex justify-content-center">
+        <button class="btn btn-info me-2" @click="openEditModal(scannedItem)">Edit Item</button>
+        <button class="btn btn-secondary" @click="resetScan">Scan Again</button>
+      </div>
+    </div>
 
+    <!-- Edit Item Modal Component -->
+    <EditItem :selectedItem="selectedItem" @item-updated="fetchUpdatedItem" />
   </div>
 </template>
 
 <script>
 import { ref, onMounted, onBeforeUnmount } from "vue";
 import { BrowserMultiFormatReader } from "@zxing/browser";
+import EditItem from "@/components/EditItem.vue";
+import { Modal } from "bootstrap";
 
 export default {
   name: "ScanZxing",
+  components: {
+    EditItem,
+  },
   setup() {
     const videoRef = ref(null);
-    let codeReader = null; // Prevent issues with re-initialization
+    let codeReader = null;
     const isScanning = ref(false);
     const scannedItem = ref(null);
     const scanError = ref("");
+    const selectedItem = ref(null);
 
     onMounted(() => {
-      codeReader = new BrowserMultiFormatReader(); // Initialize on component mount
+      codeReader = new BrowserMultiFormatReader();
     });
 
     const extractItemId = (decodedText) => {
@@ -81,7 +90,7 @@ export default {
 
       try {
         if (!codeReader) {
-          codeReader = new BrowserMultiFormatReader(); // Ensure it's initialized
+          codeReader = new BrowserMultiFormatReader();
         }
 
         await codeReader.decodeFromVideoDevice(null, videoRef.value, onFrameDecoded);
@@ -125,38 +134,52 @@ export default {
     };
 
     const stopScan = () => {
-  if (codeReader) {
-    try {
-      codeReader.reset(); // Reset scanning session (doesn't always work)
-    } catch (error) {
-      console.warn("codeReader does not have a reset method:", error);
-    }
-  }
+      if (codeReader) {
+        try {
+          codeReader.reset();
+        } catch (error) {
+          console.warn("codeReader does not have a reset method:", error);
+        }
+      }
 
-  // Properly stop the camera
-  const videoElement = videoRef.value;
-  if (videoElement && videoElement.srcObject) {
-    const stream = videoElement.srcObject;
-    stream.getTracks().forEach(track => track.stop()); // Stop all tracks
-    videoElement.srcObject = null; // Clear video feed
-  }
+      const videoElement = videoRef.value;
+      if (videoElement && videoElement.srcObject) {
+        const stream = videoElement.srcObject;
+        stream.getTracks().forEach(track => track.stop());
+        videoElement.srcObject = null;
+      }
 
-  isScanning.value = false;
-};
+      isScanning.value = false;
+    };
 
     const resetScan = () => {
       scannedItem.value = null;
       scanError.value = "";
-      isScanning.value = false; // Reset scanning state
+      isScanning.value = false;
 
-      // Small delay to ensure the scanner resets before restarting
       setTimeout(() => {
         startScan();
       }, 500);
     };
 
-    const editItem = (item) => {
-      alert("Open edit flow for item ID: " + item.id);
+    const openEditModal = (item) => {
+      selectedItem.value = item;
+
+      setTimeout(() => {
+        const editModalEl = document.getElementById("editItemModal");
+        if (!editModalEl) {
+          console.error("Error: EditItem modal element not found!");
+          return;
+        }
+        const editModal = new Modal(editModalEl, { backdrop: "static" });
+        editModal.show();
+      }, 100);
+    };
+
+    const fetchUpdatedItem = () => {
+      if (scannedItem.value && scannedItem.value.id) {
+        handleDecode(scannedItem.value.id);
+      }
     };
 
     const formatPrice = (value) => {
@@ -184,16 +207,19 @@ export default {
       isScanning,
       scannedItem,
       scanError,
+      selectedItem,
       startScan,
       stopScan,
       resetScan,
-      editItem,
+      openEditModal,
+      fetchUpdatedItem,
       formatPrice,
-      getFullImageUrl
+      getFullImageUrl,
     };
-  }
+  },
 };
 </script>
+
 
 <style scoped>
 h3 {
