@@ -1,30 +1,39 @@
 <template>
   <div class="container mt-5" style="max-width: 600px;">
-    <h3>QR SCAN</h3>
+    <h3 class="text-center">QR SCAN</h3>
 
+    <!-- If we haven't scanned an item yet, show scanning UI -->
     <div v-if="!scannedItem">
       <div class="d-flex justify-content-center mb-3">
+        <!-- Start/Stop scanning buttons -->
         <button class="btn btn-primary" @click="startScan" v-if="!isScanning">
           Start Scanning
         </button>
-        <button class="btn btn-secondary" @click="stopScan" v-if="isScanning">
+        <button class="btn btn-secondary" @click="stopScan" v-else>
           Stop Scanning
         </button>
       </div>
 
+      <!-- Video preview -->
       <div class="ratio ratio-4x3 border bg-dark" style="max-width: 100%;">
-        <video ref="videoRef" style="width: 100%; height: auto;" playsinline muted></video>
+        <video
+          ref="videoRef"
+          style="width: 100%; height: auto;"
+          playsinline
+          muted
+        ></video>
       </div>
 
+      <!-- Any errors -->
       <p v-if="scanError" class="alert alert-danger mt-2 text-center">
         {{ scanError }}
       </p>
     </div>
 
-
+    <!-- Once we've scanned/fetched the item, show its details -->
     <div v-else class="card p-3 mt-3 scanned-item-container">
       <h5 class="text-center">Scanned Item Details</h5>
-      <p><strong>ID:</strong> {{ scannedItem.id }}</p>
+      <p><strong>Inventory Number:</strong> {{ scannedItem.inventory_number }}</p>
       <p><strong>Product Name:</strong> {{ scannedItem.product_name }}</p>
       <p><strong>Description:</strong> {{ scannedItem.description }}</p>
       <p><strong>Price:</strong> ₱ {{ formatPrice(scannedItem.price) }}</p>
@@ -33,16 +42,26 @@
       <p><strong>Classification:</strong> {{ scannedItem.classification }}</p>
 
       <div v-if="scannedItem.qr_code" class="mt-2 text-center">
-        <img :src="getFullImageUrl(scannedItem.qr_code)" alt="QR Code" width="100" height="100" class="border rounded">
+        <img
+          :src="getFullImageUrl(scannedItem.qr_code)"
+          alt="QR Code"
+          width="100"
+          height="100"
+          class="border rounded"
+        />
       </div>
 
       <div class="mt-3 d-flex justify-content-center">
-        <button class="btn btn-info me-2" @click="openEditModal(scannedItem)">Edit Item</button>
-        <button class="btn btn-secondary" @click="resetScan">Scan Again</button>
+        <button class="btn btn-info me-2" @click="openEditModal(scannedItem)">
+          Edit Item
+        </button>
+        <button class="btn btn-secondary" @click="resetScan">
+          Scan Again
+        </button>
       </div>
     </div>
 
-    <!-- Edit Item Modal Component -->
+    <!-- Example EditItem modal (if you have it) -->
     <EditItem :selectedItem="selectedItem" @item-updated="fetchUpdatedItem" />
   </div>
 </template>
@@ -55,34 +74,37 @@ import { Modal } from "bootstrap";
 
 export default {
   name: "ScanZxing",
-  components: {
-    EditItem,
-  },
+  components: { EditItem },
   setup() {
     const videoRef = ref(null);
     let codeReader = null;
+
     const isScanning = ref(false);
     const scannedItem = ref(null);
     const scanError = ref("");
     const selectedItem = ref(null);
 
+    // On mount, create the codeReader instance
     onMounted(() => {
       codeReader = new BrowserMultiFormatReader();
     });
 
-    const extractItemId = (decodedText) => {
+    // Regex to extract the inventory number from text like "Inventory No: 11"
+    const extractInventoryNumber = (decodedText) => {
       console.log("Raw QR Code Data:", decodedText);
 
-      const match = decodedText.match(/Inventory\s*No[:\s]+(\d+)/i);
+      // E.g. "Inventory No: 11" or "Inventory Number: 11"
+      const match = decodedText.match(/Inventory\s*(?:Number|No)\s*[:\s]+(\d+)/i);
       if (match && match[1]) {
-        console.log("Extracted Item ID:", match[1]);
+        console.log("Extracted Inventory Number:", match[1]);
         return match[1];
       }
-
-      scanError.value = "Invalid QR code format. Please scan a valid inventory QR code.";
+      scanError.value =
+        "Invalid QR code format. Please ensure the code has 'Inventory No: <num>'.";
       return null;
     };
 
+    // Start scanning (try environment camera, then fallback)
     const startScan = async () => {
       scanError.value = "";
       scannedItem.value = null;
@@ -93,78 +115,101 @@ export default {
           codeReader = new BrowserMultiFormatReader();
         }
 
-        await codeReader.decodeFromVideoDevice(null, videoRef.value, onFrameDecoded);
-      } catch (error) {
-        console.error("Camera error:", error);
-        scanError.value = "Failed to start camera. Check permissions or device camera availability.";
-        isScanning.value = false;
+        // Attempt rear camera first
+        await codeReader.decodeFromVideoDevice(
+          { facingMode: "environment" },
+          videoRef.value,
+          onFrameDecoded
+        );
+      } catch (envError) {
+        console.warn("Environment camera failed, fallback to user:", envError);
+        try {
+          // Fallback to front camera
+          await codeReader.decodeFromVideoDevice(
+            // { facingMode: "user" },
+            null,
+            videoRef.value,
+            onFrameDecoded
+          );
+        } catch (userError) {
+          console.error("Camera error:", userError);
+          scanError.value =
+            "Failed to start camera. Check permissions or device camera availability.";
+          isScanning.value = false;
+        }
       }
     };
 
+    // Called for each frame
     const onFrameDecoded = (result, error, controls) => {
       if (result) {
         console.log("Decoded text:", result.getText());
 
-        const itemId = extractItemId(result.getText());
-        if (!itemId) {
+        const invNumber = extractInventoryNumber(result.getText());
+        if (!invNumber) {
           console.error("Invalid QR code detected.");
           return;
         }
 
-        handleDecode(itemId);
+        // If we got a valid inventory number, fetch item by it
+        fetchItemByInventoryNumber(invNumber);
+
+        // Stop scanning after success
         controls.stop();
         isScanning.value = false;
         stopScan();
       }
+      // 'error' is normal if no code in that frame
     };
 
-    const handleDecode = async (itemId) => {
+    // Actually fetch item by inventory_number => /api/items/?inventory_number=11
+    const fetchItemByInventoryNumber = async (invNumber) => {
       try {
-        const res = await fetch(`http://127.0.0.1:8000/api/items/${itemId}/`);
+        const res = await fetch(`http://127.0.0.1:8000/api/items/?inventory_number=${invNumber}`);
         if (!res.ok) {
-          throw new Error(`Item not found for ID: ${itemId}`);
+          throw new Error(`No item found for Inventory Number: ${invNumber}`);
         }
         const data = await res.json();
-        console.log("Fetched item data:", data);
-        scannedItem.value = data;
+        if (!Array.isArray(data) || data.length === 0) {
+          throw new Error("No items match that inventory_number.");
+        }
+
+        console.log("Fetched item data:", data[0]);
+        scannedItem.value = data[0];
       } catch (err) {
         console.error("Fetch error:", err);
-        scanError.value = "Could not find item for this QR code.";
+        scanError.value = "Could not find an item for this inventory number.";
       }
     };
 
+    // Stop scanning
     const stopScan = () => {
       if (codeReader) {
         try {
           codeReader.reset();
         } catch (error) {
-          console.warn("codeReader does not have a reset method:", error);
+          console.warn("codeReader reset error:", error);
         }
       }
-
       const videoElement = videoRef.value;
       if (videoElement && videoElement.srcObject) {
         const stream = videoElement.srcObject;
-        stream.getTracks().forEach(track => track.stop());
+        stream.getTracks().forEach((track) => track.stop());
         videoElement.srcObject = null;
       }
-
       isScanning.value = false;
     };
 
+    // Clear data so we can scan again
     const resetScan = () => {
       scannedItem.value = null;
       scanError.value = "";
       isScanning.value = false;
-
-      setTimeout(() => {
-        startScan();
-      }, 500);
     };
 
+    // Open the edit modal if needed
     const openEditModal = (item) => {
       selectedItem.value = item;
-
       setTimeout(() => {
         const editModalEl = document.getElementById("editItemModal");
         if (!editModalEl) {
@@ -176,30 +221,28 @@ export default {
       }, 100);
     };
 
+    // After editing, re-fetch if needed
     const fetchUpdatedItem = () => {
-      if (scannedItem.value && scannedItem.value.id) {
-        handleDecode(scannedItem.value.id);
+      if (scannedItem.value?.inventory_number) {
+        fetchItemByInventoryNumber(scannedItem.value.inventory_number);
       }
     };
 
+    // Format currency
     const formatPrice = (value) => {
-      return new Intl.NumberFormat("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(value || 0);
+      return new Intl.NumberFormat("en-US", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      }).format(value || 0);
     };
 
+    // Build absolute URL for QR code image
     const getFullImageUrl = (path) => {
       return `http://127.0.0.1:8000${path}`;
     };
 
     onBeforeUnmount(() => {
-      if (codeReader) {
-        try {
-          if (typeof codeReader.reset === "function") {
-            codeReader.reset();
-          }
-        } catch (error) {
-          console.warn("Error resetting codeReader on unmount:", error);
-        }
-      }
+      stopScan();
     });
 
     return {
@@ -208,46 +251,37 @@ export default {
       scannedItem,
       scanError,
       selectedItem,
+
       startScan,
       stopScan,
       resetScan,
       openEditModal,
       fetchUpdatedItem,
+
       formatPrice,
-      getFullImageUrl,
+      getFullImageUrl
     };
   },
 };
 </script>
 
-
 <style scoped>
 h3 {
   text-align: center;
 }
-
 .container {
   min-height: 70vh;
 }
-
 .scanned-item-container {
   max-width: 500px;
-  margin: 0 auto; /* Center the card */
+  margin: 0 auto;
   text-align: center;
 }
-
 .scanned-item-container p {
-  margin-bottom: 5px; /* Reduce spacing for compact design */
+  margin-bottom: 5px;
 }
-
 .scanned-item-container img {
   display: block;
-  margin: 0 auto; /* Center QR code */
+  margin: 0 auto;
 }
-
-.d-flex.justify-content-center {
-  display: flex;
-  justify-content: center;
-}
-
 </style>
