@@ -104,56 +104,78 @@ export default {
     const qrCodeUrl = ref(null);
 
     const addItem = async () => {
-      const newItem = {
-        inventory_number: inventoryNumber.value,
-        product_name: productName.value,
-        description: description.value,
-        price: price.value,
-        date_of_purchase: purchaseDate.value,
-        recipient: recipient.value,
-        classification: classification.value,
-      };
+  if (!inventoryNumber.value) {
+    alert("Please enter an inventory number.");
+    return;
+  }
 
-      try {
-        const response = await fetch("http://127.0.0.1:8000/api/items/", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(newItem),
-        });
+  // ✅ First, check if the inventory number already exists (Client-side validation)
+  const checkResponse = await fetch(`http://127.0.0.1:8000/api/items/`);
+  const items = await checkResponse.json();
 
-        if (!response.ok) {
-          throw new Error("Failed to add item");
-        }
+  const duplicateItem = items.find(item => item.inventory_number === inventoryNumber.value);
 
-        const data = await response.json();
-        qrCodeUrl.value = data.qr_code; // ✅ Preserve QR Code for confirmation modal
+  if (duplicateItem) {
+    alert("Item with this inventory number already exists! Please enter a different number.");
+    return;
+  }
 
-        // Hide Add Item modal
-        const addItemModalEl = document.getElementById("addItemModal");
-        const addItemModalInstance = Modal.getInstance(addItemModalEl);
-        if (addItemModalInstance) {
-          addItemModalInstance.hide();
-        }
+  // ✅ If inventory number is unique, proceed with adding the item
+  const newItem = {
+    inventory_number: inventoryNumber.value,
+    product_name: productName.value,
+    description: description.value,
+    price: price.value,
+    date_of_purchase: purchaseDate.value,
+    recipient: recipient.value,
+    classification: classification.value,
+  };
 
-        // Show confirmation modal
-        new Modal(document.getElementById("addItemSuccessModal")).show();
+  try {
+    const response = await fetch("http://127.0.0.1:8000/api/items/", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(newItem),
+    });
 
-        // Emit event to refresh items in HomePage.vue
-        emit("item-added");
+    const data = await response.json();
 
-        // Clear input fields BUT DO NOT reset qrCodeUrl
-        inventoryNumber.value = "";
-        productName.value = "";
-        description.value = "";
-        price.value = "";
-        purchaseDate.value = "";
-        recipient.value = "";
-        classification.value = "";
-        // ❌ Do NOT reset qrCodeUrl to preserve the QR code in the confirmation modal
-      } catch (error) {
-        console.error("Add item error:", error);
+    if (!response.ok) {
+      alert(data.error); // ❌ Show backend error if duplicate
+      return;
+    }
+
+    qrCodeUrl.value = data.qr_code;
+
+    // ✅ Close the Add Item modal manually
+    const addItemModalEl = document.getElementById("addItemModal");
+    if (addItemModalEl) {
+      const addItemModalInstance = Modal.getInstance(addItemModalEl);
+      if (addItemModalInstance) {
+        addItemModalInstance.hide();
       }
-    };
+    }
+
+    // ✅ Show confirmation modal
+    new Modal(document.getElementById("addItemSuccessModal")).show();
+
+    // Emit event to refresh items
+    emit("item-added");
+
+    // ✅ Clear form after success
+    inventoryNumber.value = "";
+    productName.value = "";
+    description.value = "";
+    price.value = "";
+    purchaseDate.value = "";
+    recipient.value = "";
+    classification.value = "";
+  } catch (error) {
+    console.error("Add item error:", error);
+    alert("Failed to add item.");
+  }
+};
+
 
     const handleSuccessModalClose = () => {
       // Remove Bootstrap leftover backdrops
