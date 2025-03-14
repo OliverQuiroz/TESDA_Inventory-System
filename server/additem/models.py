@@ -4,8 +4,8 @@ from io import BytesIO
 from django.core.files.base import ContentFile
 
 class Item(models.Model):
-    inventory_number = models.CharField(max_length=100, unique=True)  # ✅ Prevent duplicate inventory numbers
-    product_name = models.CharField(max_length=255)  # ✅ Allow duplicate product names
+    inventory_number = models.CharField(max_length=100, unique=True)  # Prevent duplicate inventory numbers
+    product_name = models.CharField(max_length=255)  # Allow duplicate product names
     description = models.TextField(blank=True)
     price = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
     date_of_purchase = models.DateField(blank=True, null=True)
@@ -46,8 +46,9 @@ class Item(models.Model):
     def save(self, *args, **kwargs):
         """
         Override the save method to generate a QR code before saving an item.
+        Only generate if we don't already have one or if you'd like to regenerate each time.
         """
-        if not self.qr_code:  # Only generate a new QR code if it doesn't exist
+        if not self.qr_code:
             self.generate_qr_code()
         super().save(*args, **kwargs)
 
