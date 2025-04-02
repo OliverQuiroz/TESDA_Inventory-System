@@ -46,34 +46,53 @@
           <th>Memorandum of Receipt (MR)</th>
           <th>Classification</th>
           <th>QR Code</th>
+          <th>Actions</th> <!-- New Column -->
         </tr>
       </thead>
       <tbody>
-        <tr
-          v-for="(item, index) in paginatedItems"
-          :key="index"
-          @click="openModal(item)"
-          class="clickable-row"
-          :class="{ 'table-success animate-highlight': item.id === updatedItemId }"
-        >
-          <td>{{ item.inventory_number }}</td>
-          <td>{{ item.product_name }}</td>
-          <td>{{ item.description }}</td>
-          <td>₱ {{ formatPrice(item.price) }}</td>
-          <td>{{ item.date_of_purchase }}</td>
-          <td>{{ item.recipient }}</td>
-          <td>{{ item.classification }}</td>
-          <td>
-            <img
-              v-if="item.qr_code"
-              :src="getFullImageUrl(item.qr_code)"
-              alt="QR Code"
-              width="50"
-              height="50"
-            />
-          </td>
-        </tr>
-      </tbody>
+  <tr
+    v-for="(item, index) in paginatedItems"
+    :key="index"
+    @click="openModal(item)"
+    class="clickable-row"
+    :class="{ 'table-success animate-highlight': item.id === updatedItemId }"
+  >
+    <td>{{ item.inventory_number }}</td>
+    <td>{{ item.product_name }}</td>
+    <td>{{ item.description }}</td>
+    <td>₱ {{ formatPrice(item.price) }}</td>
+    <td>{{ item.date_of_purchase }}</td>
+    <td>{{ item.recipient }}</td>
+    <td>{{ item.classification }}</td>
+    <td>
+      <img
+        v-if="item.qr_code"
+        :src="getFullImageUrl(item.qr_code)"
+        alt="QR Code"
+        width="50"
+        height="50"
+      />
+    </td>
+    <!-- Updated Actions Column with Icons -->
+    <td>
+      <button
+        class="btn btn-sm btn-outline-info me-1"
+        @click.stop="openEditModalFromTable(item)"
+        title="Edit"
+      >
+        <i class="bi bi-pencil-square"></i>
+      </button>
+      <button
+        class="btn btn-sm btn-outline-danger"
+        @click.stop="deleteItem(item.id)"
+        title="Delete"
+      >
+        <i class="bi bi-trash"></i>
+      </button>
+    </td>
+  </tr>
+</tbody>
+
     </table>
 
     <!-- Pagination Controls -->
@@ -107,24 +126,14 @@
       </nav>
 
       <!-- Button to Open Add Item Modal -->
-      <button 
-        class="btn btn-primary" 
-        @click="openAddItemModal"
-      >
+      <button class="btn btn-primary" @click="openAddItemModal">
         Add Item
       </button>
     </div>
 
-    <!-- Add Item Modal Component -->
+    <!-- Modals -->
     <AddItemModal @item-added="fetchItems" />
-
-    <!-- Item Details as a separate component -->
-    <ItemDetails 
-      :selectedItem="selectedItem" 
-      @edit-requested="openEditModal" 
-    />
-
-    <!-- Edit Item Modal Component -->
+    <ItemDetails :selectedItem="selectedItem" @edit-requested="openEditModal" />
     <EditItem :selectedItem="selectedItem" @item-updated="fetchItems" />
   </div>
 </template>
@@ -161,9 +170,8 @@ export default {
           item.classification === this.selectedFilter
       );
 
-      // search filter
+      const query = this.searchQuery.toLowerCase();
       filtered = filtered.filter((item) => {
-        const query = this.searchQuery.toLowerCase();
         return (
           item.product_name.toLowerCase().includes(query) ||
           item.inventory_number.toLowerCase().includes(query) ||
@@ -172,9 +180,7 @@ export default {
         );
       });
 
-      // Sort descending so new items appear first
       filtered.sort((a, b) => b.id - a.id);
-
       return filtered;
     },
     totalPages() {
@@ -199,9 +205,8 @@ export default {
           throw new Error("Failed to fetch items");
         }
         this.items = await response.json();
-        this.currentPage = 1; // Jump back to page 1
+        this.currentPage = 1;
 
-        // Highlight a newly-updated item
         if (updatedItemId) {
           this.updatedItemId = updatedItemId;
           setTimeout(() => {
@@ -216,14 +221,12 @@ export default {
       this.selectedFilter = type;
       this.currentPage = 1;
     },
-    // Show the details modal
     openModal(item) {
       this.selectedItem = item || {};
       const modalElement = document.getElementById("itemModal");
       const modal = new Modal(modalElement);
       modal.show();
     },
-    // Trigger the edit item modal
     openEditModal() {
       this.$nextTick(() => {
         const editModalEl = document.getElementById("editItemModal");
@@ -235,7 +238,23 @@ export default {
         editModal.show();
       });
     },
-    // Programmatically open the AddItem modal
+    openEditModalFromTable(item) {
+      this.selectedItem = item;
+      this.openEditModal();
+    },
+    async deleteItem(id) {
+      if (!confirm("Are you sure you want to delete this item?")) return;
+      try {
+        const response = await fetch(`http://127.0.0.1:8000/api/items/${id}/`, {
+          method: "DELETE",
+        });
+        if (!response.ok) throw new Error("Failed to delete item");
+        await this.fetchItems();
+      } catch (err) {
+        console.error("Delete error:", err);
+        alert("Failed to delete the item.");
+      }
+    },
     openAddItemModal() {
       document.querySelectorAll(".modal-backdrop").forEach((backdrop) =>
         backdrop.remove()

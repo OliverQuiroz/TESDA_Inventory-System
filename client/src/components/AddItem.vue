@@ -66,19 +66,29 @@
             <h5 class="modal-title" id="addItemSuccessModalLabel">Item Added</h5>
             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" @click="handleSuccessModalClose"></button>
           </div>
-          <div class="modal-body text-center">
-            <p>Thank you! Your item has been added successfully.</p>
-            <img 
-              v-if="qrCodeUrl" 
-              :src="getFullImageUrl(qrCodeUrl)" 
-              alt="QR Code" 
-              class="img-fluid mt-2" 
-              width="150" 
-              height="150" 
-            />
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" @click="handleSuccessModalClose">Close</button>
+          <div class="modal-body">
+            <div class="row">
+              <!-- Left side: QR code -->
+              <div class="col-md-6 d-flex justify-content-center align-items-center border-end">
+                <img 
+                  v-if="qrCodeUrl" 
+                  :src="getFullImageUrl(qrCodeUrl)" 
+                  alt="QR Code" 
+                  class="img-fluid" 
+                  width="150" 
+                  height="150" 
+                />
+              </div>
+
+              <!-- Right side: message and buttons -->
+              <div class="col-md-6 d-flex flex-column justify-content-center align-items-end ps-4">
+                <p class="mb-3 text-end w-100">Thank you! Your item has been added successfully.</p>
+                <div>
+                  <button v-if="qrCodeUrl" @click="downloadQR" class="btn btn-outline-primary me-2">Download QR</button>
+                  <button v-if="qrCodeUrl" @click="printQR" class="btn btn-outline-secondary">Print QR</button>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -102,94 +112,136 @@ export default {
     const recipient = ref("");
     const classification = ref("");
     const qrCodeUrl = ref(null);
+    const savedProductName = ref(""); // ✅ Store product name for download/print
 
     const addItem = async () => {
-  if (!inventoryNumber.value) {
-    alert("Please enter an inventory number.");
-    return;
-  }
-
-  // ✅ First, check if the inventory number already exists (Client-side validation)
-  const checkResponse = await fetch(`http://127.0.0.1:8000/api/items/`);
-  const items = await checkResponse.json();
-
-  const duplicateItem = items.find(item => item.inventory_number === inventoryNumber.value);
-
-  if (duplicateItem) {
-    alert("Item with this inventory number already exists! Please enter a different number.");
-    return;
-  }
-
-  // ✅ If inventory number is unique, proceed with adding the item
-  const newItem = {
-    inventory_number: inventoryNumber.value,
-    product_name: productName.value,
-    description: description.value,
-    price: price.value,
-    date_of_purchase: purchaseDate.value,
-    recipient: recipient.value,
-    classification: classification.value,
-  };
-
-  try {
-    const response = await fetch("http://127.0.0.1:8000/api/items/", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(newItem),
-    });
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      alert(data.error); // ❌ Show backend error if duplicate
-      return;
-    }
-
-    qrCodeUrl.value = data.qr_code;
-
-    // ✅ Close the Add Item modal manually
-    const addItemModalEl = document.getElementById("addItemModal");
-    if (addItemModalEl) {
-      const addItemModalInstance = Modal.getInstance(addItemModalEl);
-      if (addItemModalInstance) {
-        addItemModalInstance.hide();
+      if (!inventoryNumber.value) {
+        alert("Please enter an inventory number.");
+        return;
       }
-    }
 
-    // ✅ Show confirmation modal
-    new Modal(document.getElementById("addItemSuccessModal")).show();
+      const checkResponse = await fetch(`http://127.0.0.1:8000/api/items/`);
+      const items = await checkResponse.json();
+      const duplicateItem = items.find(item => item.inventory_number === inventoryNumber.value);
 
-    // Emit event to refresh items
-    emit("item-added");
+      if (duplicateItem) {
+        alert("Item with this inventory number already exists! Please enter a different number.");
+        return;
+      }
 
-    // ✅ Clear form after success
-    inventoryNumber.value = "";
-    productName.value = "";
-    description.value = "";
-    price.value = "";
-    purchaseDate.value = "";
-    recipient.value = "";
-    classification.value = "";
-  } catch (error) {
-    console.error("Add item error:", error);
-    alert("Failed to add item.");
-  }
-};
+      const newItem = {
+        inventory_number: inventoryNumber.value,
+        product_name: productName.value,
+        description: description.value,
+        price: price.value,
+        date_of_purchase: purchaseDate.value,
+        recipient: recipient.value,
+        classification: classification.value,
+      };
 
+      try {
+        const response = await fetch("http://127.0.0.1:8000/api/items/", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(newItem),
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          alert(data.error);
+          return;
+        }
+
+        qrCodeUrl.value = data.qr_code;
+        savedProductName.value = productName.value; // ✅ Save product name
+
+        const addItemModalEl = document.getElementById("addItemModal");
+        if (addItemModalEl) {
+          const addItemModalInstance = Modal.getInstance(addItemModalEl);
+          if (addItemModalInstance) {
+            addItemModalInstance.hide();
+          }
+        }
+
+        new Modal(document.getElementById("addItemSuccessModal")).show();
+
+        emit("item-added");
+
+        // ✅ Clear form after saving product name
+        inventoryNumber.value = "";
+        productName.value = "";
+        description.value = "";
+        price.value = "";
+        purchaseDate.value = "";
+        recipient.value = "";
+        classification.value = "";
+      } catch (error) {
+        console.error("Add item error:", error);
+        alert("Failed to add item.");
+      }
+    };
 
     const handleSuccessModalClose = () => {
-      // Remove Bootstrap leftover backdrops
       setTimeout(() => {
         document.body.classList.remove("modal-open");
         document.querySelectorAll(".modal-backdrop").forEach(backdrop => backdrop.remove());
       }, 200);
-
-      // ✅ Reset QR code only when the success modal is fully closed
       qrCodeUrl.value = null;
+      savedProductName.value = "";
     };
 
     const getFullImageUrl = (path) => {
       return `http://127.0.0.1:8000${path}`;
+    };
+
+    const downloadQR = async () => {
+      if (!qrCodeUrl.value) return;
+      try {
+        const fullUrl = getFullImageUrl(qrCodeUrl.value);
+        const response = await fetch(fullUrl);
+        const blob = await response.blob();
+        const blobUrl = URL.createObjectURL(blob);
+
+        const rawName = savedProductName.value?.trim() || "qr_code";
+        const safeFileName = rawName.replace(/[^a-zA-Z0-9-_]/g, "_");
+
+        const link = document.createElement("a");
+        link.href = blobUrl;
+        link.download = `${safeFileName}.png`;
+        document.body.appendChild(link);
+        link.click();
+
+        document.body.removeChild(link);
+        URL.revokeObjectURL(blobUrl);
+      } catch (error) {
+        console.error("Download error:", error);
+        alert("Failed to download QR code.");
+      }
+    };
+
+    const printQR = () => {
+      if (!qrCodeUrl.value) return;
+      const imageUrl = getFullImageUrl(qrCodeUrl.value);
+      const title = savedProductName.value || "QR Code";
+      const printWindow = window.open("", "_blank");
+      printWindow.document.write(`
+        <html>
+          <head>
+            <title>Print QR Code</title>
+          </head>
+          <body style="text-align:center; padding:20px;">
+            <h3>QR Code for ${title}</h3>
+            <img src="${imageUrl}" style="width:200px; height:200px;" />
+            <script>
+              window.onload = () => {
+                window.print();
+                window.onafterprint = () => window.close();
+              };
+            <\/script>
+          </body>
+        </html>
+      `);
     };
 
     onMounted(() => {
@@ -199,18 +251,20 @@ export default {
       }
     });
 
-    return { 
-      inventoryNumber, 
-      productName, 
-      description, 
-      price, 
-      purchaseDate, 
-      recipient, 
-      classification, 
-      qrCodeUrl, 
-      addItem, 
+    return {
+      inventoryNumber,
+      productName,
+      description,
+      price,
+      purchaseDate,
+      recipient,
+      classification,
+      qrCodeUrl,
+      addItem,
       handleSuccessModalClose,
-      getFullImageUrl
+      getFullImageUrl,
+      downloadQR,
+      printQR,
     };
   },
 };

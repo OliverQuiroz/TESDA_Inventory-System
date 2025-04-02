@@ -60,17 +60,6 @@
             </div>
           </div>
         </div>
-        <div class="modal-footer">
-          <!-- Button triggers EditItem modal in parent (HomePage, etc.) -->
-          <button
-            type="button"
-            class="btn btn-info"
-            @click="emitEditRequest"
-            data-bs-dismiss="modal"
-          >
-            <i class="bi bi-pencil"></i> Edit
-          </button>
-        </div>
       </div>
     </div>
   </div>
