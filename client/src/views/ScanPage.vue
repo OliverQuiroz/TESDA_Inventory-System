@@ -89,22 +89,36 @@ export default {
       codeReader = new BrowserMultiFormatReader();
     });
 
-    // Regex to extract the inventory number from text like "Inventory No: 11"
+    /**
+     * Extract the inventory number from lines like:
+     *   "Inventory No: INV - 10"
+     * or
+     *   "Inventory Number: ABC123"
+     *
+     * We'll capture everything after "Inventory No/Number: "
+     * up to the next newline. That way letters/dashes/spaces are allowed.
+     */
     const extractInventoryNumber = (decodedText) => {
       console.log("Raw QR Code Data:", decodedText);
 
-      // E.g. "Inventory No: 11" or "Inventory Number: 11"
-      const match = decodedText.match(/Inventory\s*(?:Number|No)\s*[:\s]+(\d+)/i);
+      // Regex explanation:
+      //  - Look for "Inventory" then optional spaces + "No" or "Number"
+      //  - Then ":", plus optional spaces
+      //  - Capture everything until the next newline
+      // We'll remove any trailing spaces/newlines
+      const match = decodedText.match(/Inventory\s*(?:Number|No)\s*:\s*([^\r\n]+)/i);
       if (match && match[1]) {
-        console.log("Extracted Inventory Number:", match[1]);
-        return match[1];
+        const invNumber = match[1].split("\n")[0].trim();
+        console.log("Extracted Inventory Number:", invNumber);
+        return invNumber;
       }
+
       scanError.value =
-        "Invalid QR code format. Please ensure the code has 'Inventory No: <num>'.";
+        "Invalid QR code format. Please ensure the code has 'Inventory No: <text>'.";
       return null;
     };
 
-    // Start scanning (try environment camera, then fallback)
+    // Start scanning (try environment camera, fallback to user)
     const startScan = async () => {
       scanError.value = "";
       scannedItem.value = null;
@@ -117,7 +131,8 @@ export default {
 
         // Attempt rear camera first
         await codeReader.decodeFromVideoDevice(
-          { facingMode: "environment" },
+          // { facingMode: "environment" },
+          null,
           videoRef.value,
           onFrameDecoded
         );
@@ -147,7 +162,7 @@ export default {
 
         const invNumber = extractInventoryNumber(result.getText());
         if (!invNumber) {
-          console.error("Invalid QR code detected.");
+          console.error("Invalid QR code detected (no inventory number).");
           return;
         }
 
@@ -162,10 +177,12 @@ export default {
       // 'error' is normal if no code in that frame
     };
 
-    // Actually fetch item by inventory_number => /api/items/?inventory_number=11
+    // Actually fetch item by inventory_number => /api/items/?inventory_number=INV-10
     const fetchItemByInventoryNumber = async (invNumber) => {
       try {
-        const res = await fetch(`http://127.0.0.1:8000/api/items/?inventory_number=${invNumber}`);
+        // Use encodeURIComponent in case of spaces/dashes
+        const encoded = encodeURIComponent(invNumber);
+        const res = await fetch(`http://127.0.0.1:8000/api/items/?inventory_number=${encoded}`);
         if (!res.ok) {
           throw new Error(`No item found for Inventory Number: ${invNumber}`);
         }

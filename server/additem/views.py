@@ -14,7 +14,6 @@ def items_view(request):
     if request.method == 'GET':
         inv_num = request.GET.get('inventory_number')
         if inv_num:
-            # Filter by inventory_number if provided
             items = Item.objects.filter(inventory_number=inv_num).order_by('id')
         else:
             items = Item.objects.all().order_by('id')
@@ -26,7 +25,7 @@ def items_view(request):
         data = request.data
         inventory_number = data.get("inventory_number")
 
-        # ✅ Check for duplicate inventory number
+        # Check for duplicate inventory number
         if Item.objects.filter(inventory_number=inventory_number).exists():
             return Response(
                 {"error": "Item with this inventory number already exists!"},
@@ -35,7 +34,7 @@ def items_view(request):
 
         serializer = ItemSerializer(data=data)
         if serializer.is_valid():
-            item = serializer.save()  # This triggers item.save() => generates QR code
+            item = serializer.save()  # triggers item.save() => generates QR code
             return Response(
                 {
                     "message": "Item added successfully!",
@@ -43,7 +42,6 @@ def items_view(request):
                 },
                 status=status.HTTP_201_CREATED
             )
-
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -66,7 +64,7 @@ def item_detail_view(request, pk):
     elif request.method == 'PUT':
         serializer = ItemSerializer(item, data=request.data)
         if serializer.is_valid():
-            serializer.save()  # will re-generate QR if self.qr_code was cleared, etc.
+            serializer.save()  # re-generate QR if self.qr_code was cleared, etc.
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 

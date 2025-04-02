@@ -16,8 +16,13 @@ class Item(models.Model):
         ("PPE", "Property, Plant & Equipment"),
     ]
     classification = models.CharField(
-        max_length=10, choices=CLASSIFICATION_CHOICES, default="SE"
+        max_length=10,
+        choices=CLASSIFICATION_CHOICES,
+        default="SE"
     )
+
+    # New field to store when the item was created in the system
+    created_at = models.DateTimeField(auto_now_add=True)
 
     qr_code = models.ImageField(upload_to="qr_codes/", blank=True, null=True)
 
@@ -30,7 +35,7 @@ class Item(models.Model):
             f"Product: {self.product_name}\n"
             f"Description: {self.description}\n"
             f"Price: {self.price}\n"
-            f"Date: {self.date_of_purchase}\n"
+            f"Date of Purchase: {self.date_of_purchase}\n"
             f"Recipient: {self.recipient}\n"
             f"Classification: {self.classification}"
         )
@@ -39,14 +44,13 @@ class Item(models.Model):
         buffer = BytesIO()
         qr.save(buffer, format="PNG")
 
-        # Save the QR code image
         filename = f"{self.inventory_number}_qr.png"
         self.qr_code.save(filename, ContentFile(buffer.getvalue()), save=False)
 
     def save(self, *args, **kwargs):
         """
-        Override the save method to generate a QR code before saving an item.
-        Only generate if we don't already have one or if you'd like to regenerate each time.
+        Override the save method to generate a QR code before saving an item
+        if one doesn't already exist.
         """
         if not self.qr_code:
             self.generate_qr_code()

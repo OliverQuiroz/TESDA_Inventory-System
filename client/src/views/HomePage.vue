@@ -46,53 +46,51 @@
           <th>Memorandum of Receipt (MR)</th>
           <th>Classification</th>
           <th>QR Code</th>
-          <th>Actions</th> <!-- New Column -->
+          <th>Actions</th> 
         </tr>
       </thead>
       <tbody>
-  <tr
-    v-for="(item, index) in paginatedItems"
-    :key="index"
-    @click="openModal(item)"
-    class="clickable-row"
-    :class="{ 'table-success animate-highlight': item.id === updatedItemId }"
-  >
-    <td>{{ item.inventory_number }}</td>
-    <td>{{ item.product_name }}</td>
-    <td>{{ item.description }}</td>
-    <td>₱ {{ formatPrice(item.price) }}</td>
-    <td>{{ item.date_of_purchase }}</td>
-    <td>{{ item.recipient }}</td>
-    <td>{{ item.classification }}</td>
-    <td>
-      <img
-        v-if="item.qr_code"
-        :src="getFullImageUrl(item.qr_code)"
-        alt="QR Code"
-        width="50"
-        height="50"
-      />
-    </td>
-    <!-- Updated Actions Column with Icons -->
-    <td>
-      <button
-        class="btn btn-sm btn-outline-info me-1"
-        @click.stop="openEditModalFromTable(item)"
-        title="Edit"
-      >
-        <i class="bi bi-pencil-square"></i>
-      </button>
-      <button
-        class="btn btn-sm btn-outline-danger"
-        @click.stop="deleteItem(item.id)"
-        title="Delete"
-      >
-        <i class="bi bi-trash"></i>
-      </button>
-    </td>
-  </tr>
-</tbody>
-
+        <tr
+          v-for="(item, index) in paginatedItems"
+          :key="index"
+          @click="openModal(item)"
+          class="clickable-row"
+          :class="{ 'table-success animate-highlight': item.id === updatedItemId }"
+        >
+          <td>{{ item.inventory_number }}</td>
+          <td>{{ item.product_name }}</td>
+          <td>{{ item.description }}</td>
+          <td>₱ {{ formatPrice(item.price) }}</td>
+          <td>{{ item.date_of_purchase }}</td>
+          <td>{{ item.recipient }}</td>
+          <td>{{ item.classification }}</td>
+          <td>
+            <img
+              v-if="item.qr_code"
+              :src="getFullImageUrl(item.qr_code)"
+              alt="QR Code"
+              width="50"
+              height="50"
+            />
+          </td>
+          <td>
+            <button
+              class="btn btn-sm btn-outline-info me-1"
+              @click.stop="openEditModalFromTable(item)"
+              title="Edit"
+            >
+              <i class="bi bi-pencil-square"></i>
+            </button>
+            <button
+              class="btn btn-sm btn-outline-danger"
+              @click.stop="deleteItem(item.id)"
+              title="Delete"
+            >
+              <i class="bi bi-trash"></i>
+            </button>
+          </td>
+        </tr>
+      </tbody>
     </table>
 
     <!-- Pagination Controls -->
@@ -180,6 +178,7 @@ export default {
         );
       });
 
+      // Sort by descending ID to show newest items first
       filtered.sort((a, b) => b.id - a.id);
       return filtered;
     },
@@ -256,6 +255,7 @@ export default {
       }
     },
     openAddItemModal() {
+      // Remove leftover backdrops to avoid multiple stacked modals
       document.querySelectorAll(".modal-backdrop").forEach((backdrop) =>
         backdrop.remove()
       );

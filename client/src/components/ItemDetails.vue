@@ -29,6 +29,7 @@
               <p>Date of Purchase:</p>
               <p>Memorandum of Receipt:</p>
               <p>Classification:</p>
+              <p>Date Encoded:</p>
               <p>QR Code:</p>
             </div>
 
@@ -41,6 +42,10 @@
               <p>{{ selectedItem?.date_of_purchase }}</p>
               <p>{{ selectedItem?.recipient }}</p>
               <p>{{ selectedItem?.classification }}</p>
+
+              <!-- Format the created_at field for a more readable display -->
+              <p>{{ formatCreatedAt(selectedItem?.created_at) }}</p>
+
               <p class="text-center">
                 <!-- Larger QR code -->
                 <img
@@ -63,6 +68,7 @@
       </div>
     </div>
   </div>
+
 </template>
 
 <script>
@@ -89,6 +95,23 @@ export default {
         maximumFractionDigits: 2,
       }).format(num);
     },
+    formatCreatedAt(dateString) {
+      if (!dateString) return "";
+
+      // Convert the ISO string to a JavaScript Date object
+      const dateObj = new Date(dateString);
+
+      // Example format: "April 02, 2025, 3:59:53 PM"
+      return dateObj.toLocaleString("en-US", {
+        month: "long",
+        day: "2-digit",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+        hour12: true,
+      });
+    },
     async downloadQR() {
       if (!this.selectedItem?.qr_code) return;
       try {
@@ -99,12 +122,12 @@ export default {
 
         // Format product name for filename
         const productName = this.selectedItem?.product_name || "qr_code";
-        const safeFileName = productName.replace(/[^a-zA-Z0-9_-]/g, "_"); // Replace spaces & special chars
+        const safeFileName = productName.replace(/[^a-zA-Z0-9_-]/g, "_");
 
         // Create a temporary download link
         const link = document.createElement("a");
         link.href = blobUrl;
-        link.download = `${safeFileName}.png`; // Use product name as filename
+        link.download = `${safeFileName}.png`;
         document.body.appendChild(link);
         link.click();
 
@@ -119,4 +142,3 @@ export default {
   },
 };
 </script>
-
