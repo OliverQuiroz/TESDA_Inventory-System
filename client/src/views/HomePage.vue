@@ -34,67 +34,69 @@
       />
     </div>
 
-    <!-- Items Table -->
-    <table class="table table-bordered text-center">
-      <thead>
-        <tr>
-          <th>Inventory Number</th>
-          <th>Product Name</th>
-          <th>Description</th>
-          <th>Price</th>
-          <th>Date of Purchase</th>
-          <th>Memorandum of Receipt (MR)</th>
-          <th>Classification</th>
-          <th>QR Code</th>
-          <th>Actions</th> 
-        </tr>
-      </thead>
-      <tbody>
-        <tr
-          v-for="(item, index) in paginatedItems"
-          :key="index"
-          @click="openModal(item)"
-          class="clickable-row"
-          :class="{ 'table-success animate-highlight': item.id === updatedItemId }"
-        >
-          <td>{{ item.inventory_number }}</td>
-          <td>{{ item.product_name }}</td>
-          <td>{{ item.description }}</td>
-          <td>₱ {{ formatPrice(item.price) }}</td>
-          <td>{{ item.date_of_purchase }}</td>
-          <td>{{ item.recipient }}</td>
-          <td>{{ item.classification }}</td>
-          <td>
-            <img
-              v-if="item.qr_code"
-              :src="getFullImageUrl(item.qr_code)"
-              alt="QR Code"
-              width="50"
-              height="50"
-            />
-          </td>
-          <td>
-            <button
-              class="btn btn-sm btn-outline-info me-1"
-              @click.stop="openEditModalFromTable(item)"
-              title="Edit"
-            >
-              <i class="bi bi-pencil-square"></i>
-            </button>
-            <button
-              class="btn btn-sm btn-outline-danger"
-              @click.stop="deleteItem(item.id)"
-              title="Delete"
-            >
-              <i class="bi bi-trash"></i>
-            </button>
-          </td>
-        </tr>
-      </tbody>
-    </table>
+    <!-- Items Table with fixed height -->
+    <div class="table-wrapper">
+      <table class="table table-bordered text-center">
+        <thead>
+          <tr>
+            <th>Inventory Number</th>
+            <th>Product Name</th>
+            <th>Description</th>
+            <th>Price</th>
+            <th>Date of Purchase</th>
+            <th>Memorandum of Receipt (MR)</th>
+            <th>Classification</th>
+            <th>QR Code</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr
+            v-for="(item, index) in paginatedItems"
+            :key="index"
+            @click="openModal(item)"
+            class="clickable-row"
+            :class="{ 'table-success animate-highlight': item.id === updatedItemId }"
+          >
+            <td>{{ item.inventory_number }}</td>
+            <td>{{ item.product_name }}</td>
+            <td>{{ truncateText(item.description, 30) }}</td>
+            <td>₱ {{ formatPrice(item.price) }}</td>
+            <td>{{ item.date_of_purchase }}</td>
+            <td>{{ item.recipient }}</td>
+            <td>{{ item.classification }}</td>
+            <td>
+              <img
+                v-if="item.qr_code"
+                :src="getFullImageUrl(item.qr_code)"
+                alt="QR Code"
+                width="50"
+                height="50"
+              />
+            </td>
+            <td>
+              <button
+                class="btn btn-sm btn-outline-warning me-1"
+                @click.stop="openEditModalFromTable(item)"
+                title="Edit"
+              >
+                <i class="bi bi-pencil-square"></i>
+              </button>
+              <button
+                class="btn btn-sm btn-outline-danger"
+                @click.stop="deleteItem(item.id)"
+                title="Delete"
+              >
+                <i class="bi bi-trash"></i>
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
 
-    <!-- Pagination Controls -->
-    <div class="d-flex justify-content-between align-items-center mt-3">
+    <!-- Pagination + Add Item -->
+    <div class="d-flex justify-content-between align-items-center mt-3 pagination-footer">
       <nav>
         <ul class="pagination">
           <li class="page-item" :class="{ disabled: currentPage === 1 }">
@@ -102,20 +104,24 @@
               &larr; Previous
             </button>
           </li>
+
           <li
-            v-for="page in totalPages"
+            v-for="page in visiblePages"
             :key="page"
             class="page-item"
-            :class="{ active: page === currentPage }"
+            :class="{ active: page === currentPage, disabled: page === '...' }"
           >
-            <button class="page-link" @click="changePage(page)">
+            <button
+              v-if="page !== '...'"
+              class="page-link"
+              @click="changePage(page)"
+            >
               {{ page }}
             </button>
+            <span v-else class="page-link">...</span>
           </li>
-          <li
-            class="page-item"
-            :class="{ disabled: currentPage === totalPages }"
-          >
+
+          <li class="page-item" :class="{ disabled: currentPage === totalPages }">
             <button class="page-link" @click="changePage(currentPage + 1)">
               Next &rarr;
             </button>
@@ -123,7 +129,6 @@
         </ul>
       </nav>
 
-      <!-- Button to Open Add Item Modal -->
       <button class="btn btn-primary" @click="openAddItemModal">
         Add Item
       </button>
@@ -154,7 +159,7 @@ export default {
       items: [],
       updatedItemId: null,
       currentPage: 1,
-      itemsPerPage: 5,
+      itemsPerPage: 7,
       searchQuery: "",
       selectedFilter: "all",
       selectedItem: {},
@@ -178,7 +183,6 @@ export default {
         );
       });
 
-      // Sort by descending ID to show newest items first
       filtered.sort((a, b) => b.id - a.id);
       return filtered;
     },
@@ -188,6 +192,24 @@ export default {
     paginatedItems() {
       const start = (this.currentPage - 1) * this.itemsPerPage;
       return this.filteredItems.slice(start, start + this.itemsPerPage);
+    },
+    visiblePages() {
+      const total = this.totalPages;
+      const maxVisible = 7;
+      const tailVisible = 3;
+      let pages = [];
+
+      if (total <= maxVisible + tailVisible + 1) {
+        for (let i = 1; i <= total; i++) pages.push(i);
+      } else {
+        for (let i = 1; i <= maxVisible; i++) pages.push(i);
+        pages.push("...");
+        for (let i = total - tailVisible + 1; i <= total; i++) {
+          pages.push(i);
+        }
+      }
+
+      return pages;
     },
     seCount() {
       return this.items.filter((item) => item.classification === "SE").length;
@@ -255,7 +277,6 @@ export default {
       }
     },
     openAddItemModal() {
-      // Remove leftover backdrops to avoid multiple stacked modals
       document.querySelectorAll(".modal-backdrop").forEach((backdrop) =>
         backdrop.remove()
       );
@@ -279,6 +300,10 @@ export default {
         maximumFractionDigits: 2,
       }).format(num);
     },
+    truncateText(text, maxLength) {
+      if (!text) return "";
+      return text.length > maxLength ? text.substring(0, maxLength) + "..." : text;
+    },
   },
   async mounted() {
     await this.fetchItems();
@@ -298,7 +323,6 @@ export default {
   background-color: #f8f9fa;
   transform: scale(1.05);
 }
-/* Fade highlight animation */
 @keyframes fadeHighlight {
   0% {
     background-color: #ff94df;
@@ -309,5 +333,16 @@ export default {
 }
 .animate-highlight {
   animation: fadeHighlight 0.1s ease-in-out;
+}
+
+.table-wrapper {
+  min-height: 530px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.pagination-footer {
+  min-height: 58px;
 }
 </style>

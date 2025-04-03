@@ -7,7 +7,7 @@
     aria-labelledby="itemModalLabel"
     aria-hidden="true"
   >
-  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-dialog modal-dialog-centered" style="max-width: 600px;">
       <div class="modal-content p-4">
         <div class="modal-header border-0 text-center d-flex flex-column w-100">
           <h5 class="modal-title fw-bold text-center w-100">ITEM DETAILS</h5>
@@ -18,49 +18,26 @@
             aria-label="Close"
           ></button>
         </div>
+
         <div class="modal-body">
-          <div class="row">
-            <!-- Labels Column -->
-            <div class="col-md-6 col-12 fw-bold">
-              <p>Inventory Number:</p>
-              <p>Product Name:</p>
-              <p>Description:</p>
-              <p>Price:</p>
-              <p>Date of Purchase:</p>
-              <p>Memorandum of Receipt:</p>
-              <p>Classification:</p>
-              <p>Date Encoded:</p>
-              <p>QR Code:</p>
-            </div>
+          <div class="info-row" v-for="(value, label) in itemDetails" :key="label">
+            <div class="label">{{ label }}:</div>
+            <div class="value" :class="{ 'wrapped-text': label === 'Description' }">{{ value }}</div>
+          </div>
 
-            <!-- Data Column -->
-            <div class="col-md-6 col-12">
-              <p>{{ selectedItem?.inventory_number }}</p>
-              <p>{{ selectedItem?.product_name }}</p>
-              <p>{{ selectedItem?.description }}</p>
-              <p>₱ {{ formatPrice(selectedItem?.price) }}</p>
-              <p>{{ selectedItem?.date_of_purchase }}</p>
-              <p>{{ selectedItem?.recipient }}</p>
-              <p>{{ selectedItem?.classification }}</p>
-
-              <!-- Format the created_at field for a more readable display -->
-              <p>{{ formatCreatedAt(selectedItem?.created_at) }}</p>
-
-              <p class="text-center">
-                <img
-                  v-if="qrImage"
-                  :src="qrImage"
-                  alt="QR Code with Label"
-                  width="200"
-                  height="auto"
-                />
-              </p>
-              <p class="text-center">
-                <button class="btn btn-primary" @click="downloadQR">
-                  Download QR Code
-                </button>
-              </p>
-            </div>
+          <!-- QR Code -->
+          <div class="text-center mt-4">
+            <img
+              v-if="qrImage"
+              :src="qrImage"
+              alt="QR Code with Label"
+              width="200"
+              height="auto"
+              class="d-block mx-auto"
+            />
+            <button class="btn btn-primary mt-3 d-block mx-auto" @click="downloadQR">
+              Download QR Code
+            </button>
           </div>
         </div>
       </div>
@@ -69,7 +46,6 @@
     <!-- Hidden Canvas -->
     <canvas ref="qrCanvas" style="display: none;"></canvas>
   </div>
-
 </template>
 
 <script>
@@ -84,8 +60,22 @@ export default {
   emits: ["edit-requested"],
   data() {
     return {
-      qrImage: "", // Holds the canvas-rendered QR image with label
+      qrImage: "",
     };
+  },
+  computed: {
+    itemDetails() {
+      return {
+        "Inventory Number": this.selectedItem?.inventory_number,
+        "Product Name": this.selectedItem?.product_name,
+        Description: this.selectedItem?.description,
+        Price: "₱ " + this.formatPrice(this.selectedItem?.price),
+        "Date of Purchase": this.selectedItem?.date_of_purchase,
+        "Memorandum of Receipt": this.selectedItem?.recipient,
+        Classification: this.selectedItem?.classification,
+        "Date Encoded": this.formatCreatedAt(this.selectedItem?.created_at),
+      };
+    },
   },
   watch: {
     selectedItem: {
@@ -115,11 +105,7 @@ export default {
     },
     formatCreatedAt(dateString) {
       if (!dateString) return "";
-
-      // Convert the ISO string to a JavaScript Date object
       const dateObj = new Date(dateString);
-
-      // Example format: "April 02, 2025, 3:59:53 PM"
       return dateObj.toLocaleString("en-US", {
         month: "long",
         day: "2-digit",
@@ -130,7 +116,6 @@ export default {
         hour12: true,
       });
     },
-        
     async generateLabeledQR() {
       const path = this.selectedItem?.qr_code;
       const productName = this.selectedItem?.product_name || "QR Code";
@@ -184,3 +169,21 @@ export default {
   },
 };
 </script>
+
+<style scoped>
+.info-row {
+  display: flex;
+  margin-bottom: 10px;
+}
+.label {
+  flex: 0 0 45%;
+  font-weight: bold;
+}
+.value {
+  flex: 1;
+  word-break: break-word;
+}
+.wrapped-text {
+  white-space: pre-wrap;
+}
+</style>

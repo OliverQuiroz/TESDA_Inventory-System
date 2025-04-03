@@ -204,7 +204,7 @@ export default {
           const canvas = qrCanvas.value;
           const ctx = canvas.getContext("2d");
 
-          const padding = 10;
+          const padding = 20;
           const fontSize = 36;
           const font = `${fontSize}px Arial`;
 

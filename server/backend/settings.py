@@ -129,7 +129,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'tesda',
         'USER': 'root',
-        'PASSWORD': 'pncuc48599',
+        'PASSWORD': 'polinar@12345',
         'HOST': 'localhost', 
         'PORT': '3306',
     }
