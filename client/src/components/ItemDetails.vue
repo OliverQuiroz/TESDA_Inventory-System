@@ -7,7 +7,7 @@
     aria-labelledby="itemModalLabel"
     aria-hidden="true"
   >
-    <div class="modal-dialog modal-dialog-centered" style="max-width: 600px;">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
       <div class="modal-content p-4">
         <div class="modal-header border-0 text-center d-flex flex-column w-100">
           <h5 class="modal-title fw-bold text-center w-100">ITEM DETAILS</h5>
@@ -20,22 +20,39 @@
         </div>
 
         <div class="modal-body">
-          <div class="info-row" v-for="(value, label) in itemDetails" :key="label">
-            <div class="label">{{ label }}:</div>
-            <div class="value" :class="{ 'wrapped-text': label === 'Description' }">{{ value }}</div>
+          <div v-for="(value, label) in itemDetails" :key="label" class="row mb-2">
+            <div class="col-sm-5 fw-semibold">{{ label }}:</div>
+            <div class="col-sm-7 text-break">{{ value }}</div>
+          </div>
+
+          <!-- Recipient History -->
+          <div class="mb-4">
+            <label class="col-sm-5 fw-semibold">Recipient History:</label>
+            <ul class="list-group" v-if="uniqueRecipientHistory.length">
+              <li
+                v-for="(entry, index) in uniqueRecipientHistory"
+                :key="index"
+                class="list-group-item d-flex justify-content-between align-items-center"
+              >
+                {{ entry.name }}
+                <span class="badge bg-secondary">{{ entry.date }}</span>
+              </li>
+            </ul>
+            <div v-else>
+              <small class="text-muted">No recipient history</small>
+            </div>
           </div>
 
           <!-- QR Code -->
-          <div class="text-center mt-4">
+          <div class="text-center">
             <img
               v-if="qrImage"
               :src="qrImage"
               alt="QR Code with Label"
-              width="200"
-              height="auto"
-              class="d-block mx-auto"
+              class="img-fluid mb-3"
+              style="max-width: 200px;"
             />
-            <button class="btn btn-primary mt-3 d-block mx-auto" @click="downloadQR">
+            <button class="btn btn-primary" @click="downloadQR">
               Download QR Code
             </button>
           </div>
@@ -75,6 +92,15 @@ export default {
         Classification: this.selectedItem?.classification,
         "Date Encoded": this.formatCreatedAt(this.selectedItem?.created_at),
       };
+    },
+    uniqueRecipientHistory() {
+      const seen = new Set();
+      return (this.selectedItem?.recipient_history || []).filter((entry) => {
+        const key = `${entry.name}-${entry.date}`;
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
     },
   },
   watch: {
@@ -171,19 +197,14 @@ export default {
 </script>
 
 <style scoped>
-.info-row {
-  display: flex;
-  margin-bottom: 10px;
+.row {
+  margin-bottom: 0.5rem;
 }
-.label {
-  flex: 0 0 45%;
-  font-weight: bold;
-}
-.value {
-  flex: 1;
+.text-break {
   word-break: break-word;
-}
-.wrapped-text {
   white-space: pre-wrap;
+}
+.list-group-item {
+  font-size: 14px;
 }
 </style>
