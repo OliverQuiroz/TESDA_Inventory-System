@@ -2,14 +2,16 @@ from django.db import models
 import qrcode  # type: ignore
 from io import BytesIO
 from django.core.files.base import ContentFile
+from django.utils import timezone
 
 class Item(models.Model):
-    inventory_number = models.CharField(max_length=100, unique=True)  # Prevent duplicate inventory numbers
-    product_name = models.CharField(max_length=255)  # Allow duplicate product names
+    inventory_number = models.CharField(max_length=100, unique=True)
+    product_name = models.CharField(max_length=255)
     description = models.TextField(blank=True)
     price = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
     date_of_purchase = models.DateField(blank=True, null=True)
     recipient = models.CharField(max_length=255, blank=True)
+    recipient_history = models.JSONField(default=list, blank=True)  # For PostgreSQL
 
     CLASSIFICATION_CHOICES = [
         ("SE", "Semi-Expendable"),
@@ -21,15 +23,10 @@ class Item(models.Model):
         default="SE"
     )
 
-    # New field to store when the item was created in the system
+    qr_code = models.ImageField(upload_to="qr_codes/", blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
-    qr_code = models.ImageField(upload_to="qr_codes/", blank=True, null=True)
-
     def generate_qr_code(self):
-        """
-        Generate a QR code containing item details and save it as an image file.
-        """
         qr_data = (
             f"Inventory No: {self.inventory_number}\n"
             f"Product: {self.product_name}\n"
@@ -48,13 +45,30 @@ class Item(models.Model):
         self.qr_code.save(filename, ContentFile(buffer.getvalue()), save=False)
 
     def save(self, *args, **kwargs):
-        """
-        Override the save method to generate a QR code before saving an item
-        if one doesn't already exist.
-        """
+        # Detect recipient change
+        if self.pk:
+            old = Item.objects.get(pk=self.pk)
+            if old.recipient != self.recipient:
+                self._add_to_recipient_history()
+        elif not self.recipient_history:
+            self._add_to_recipient_history()
+
+        # Generate QR code if missing
         if not self.qr_code:
             self.generate_qr_code()
+
         super().save(*args, **kwargs)
+
+    def _add_to_recipient_history(self):
+        today = timezone.now().date().isoformat()
+        new_entry = {
+            "name": self.recipient,
+            "date": today
+        }
+
+        # Avoid duplicate history entries
+        if new_entry not in self.recipient_history:
+            self.recipient_history.append(new_entry)
 
     def __str__(self):
         return f"{self.inventory_number} - {self.product_name}"

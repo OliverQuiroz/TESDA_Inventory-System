@@ -25,7 +25,3 @@ export default {
   }
 }
 </script>
-
-<style>
-/* Optional global styles */
-</style>

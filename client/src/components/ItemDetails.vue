@@ -7,7 +7,7 @@
     aria-labelledby="itemModalLabel"
     aria-hidden="true"
   >
-    <div class="modal-dialog">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
       <div class="modal-content p-4">
         <div class="modal-header border-0 text-center d-flex flex-column w-100">
           <h5 class="modal-title fw-bold text-center w-100">ITEM DETAILS</h5>
@@ -21,7 +21,7 @@
         <div class="modal-body">
           <div class="row">
             <!-- Labels Column -->
-            <div class="col-md-6 text-start fw-bold">
+            <div class="col-md-6 col-12 fw-bold">
               <p>Inventory Number:</p>
               <p>Product Name:</p>
               <p>Description:</p>
@@ -34,7 +34,7 @@
             </div>
 
             <!-- Data Column -->
-            <div class="col-md-6 text-start">
+            <div class="col-md-6 col-12">
               <p>{{ selectedItem?.inventory_number }}</p>
               <p>{{ selectedItem?.product_name }}</p>
               <p>{{ selectedItem?.description }}</p>

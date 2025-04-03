@@ -32,9 +32,6 @@
           </div>
           <button type="submit" class="btn btn-dark w-100">Sign In</button>
           <div v-if="errorMessage" class="error-message">{{ errorMessage }}</div>
-          <div class="text-center mt-3">
-            <a href="#" class="forgot-password">Forgot password?</a>
-          </div>
         </form>
       </div>
     </div>

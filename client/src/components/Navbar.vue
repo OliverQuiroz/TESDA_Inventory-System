@@ -2,7 +2,7 @@
   <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
     <div class="container">
       <!-- BRAND/LOGO -->
-      <router-link class="navbar-brand d-flex align-items-center" to="/home">
+      <router-link class="navbar-brand d-flex align-items-center gap-2" to="/home">
         <img src="@/assets/tesda.png" alt="Logo" class="me-2" height="70" />
         <span class="fw-bold">JZGMSAT</span>
       </router-link>

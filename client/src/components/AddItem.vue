@@ -1,56 +1,71 @@
 <template>
   <div>
-    <!-- Main Add Item Modal -->
-    <div class="modal fade" id="addItemModal" tabindex="-1" aria-hidden="true">
-      <div class="modal-dialog modal-dialog-centered">
+    <!-- Add Item Modal -->
+    <div class="modal fade" id="addItemModal" tabindex="-1">
+      <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content p-4">
           <div class="modal-header border-0 text-center d-flex flex-column w-100">
-            <h3 class="modal-title fw-bold text-center w-100">ADD ITEM</h3>
+            <h5 class="modal-title fw-bold text-center w-100">ADD ITEM</h5>
             <button type="button" class="btn-close position-absolute end-0 me-3" data-bs-dismiss="modal"></button>
           </div>
 
           <div class="modal-body">
             <form @submit.prevent="addItem">
-              <div class="form-floating mb-3">
-                <input type="text" v-model="inventoryNumber" class="form-control" placeholder="Enter Inventory Number" required />
-                <label>Enter Inventory Number</label>
+              <div class="row g-3">
+                <div class="col-md-6">
+                  <div class="form-floating">
+                    <input type="text" v-model="inventoryNumber" class="form-control" placeholder="Enter Inventory Number" required />
+                    <label>Enter Inventory Number</label>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="form-floating">
+                    <input type="text" v-model="productName" class="form-control" placeholder="Enter Product Name" required />
+                    <label>Enter Product Name</label>
+                  </div>
+                </div>
+
+                <div class="col-12">
+                  <div class="form-floating">
+                    <input type="text" v-model="description" class="form-control" placeholder="Enter Description" />
+                    <label>Enter Description</label>
+                  </div>
+                </div>
+
+                <div class="col-md-6">
+                  <div class="form-floating">
+                    <input type="number" v-model="price" class="form-control" placeholder="Enter Price" />
+                    <label>Enter Price</label>
+                  </div>
+                </div>
+
+                <div class="col-md-6">
+                  <div class="form-floating">
+                    <input type="date" v-model="purchaseDate" class="form-control" placeholder="Date of Purchase" />
+                    <label>Date of Purchase</label>
+                  </div>
+                </div>
+
+                <div class="col-md-6">
+                  <div class="form-floating">
+                    <input type="text" v-model="recipient" class="form-control" placeholder="Enter Recipient" />
+                    <label>Enter Recipient</label>
+                  </div>
+                </div>
+
+                <div class="col-md-6">
+                  <div class="form-floating">
+                    <select v-model="classification" class="form-select">
+                      <option value="SE">(SE) Semi-Expendable</option>
+                      <option value="PPE">(PPE) Property, Plant & Equipment</option>
+                    </select>
+                    <label>Select Classification</label>
+                  </div>
+                </div>
               </div>
 
-              <div class="form-floating mb-3">
-                <input type="text" v-model="productName" class="form-control" placeholder="Enter Product Name" required />
-                <label>Enter Product Name</label>
-              </div>
-
-              <div class="form-floating mb-3">
-                <input type="text" v-model="description" class="form-control" placeholder="Enter Description" />
-                <label>Enter Description</label>
-              </div>
-
-              <div class="form-floating mb-3">
-                <input type="number" v-model="price" class="form-control" placeholder="Enter Price" />
-                <label>Enter Price</label>
-              </div>
-
-              <div class="form-floating mb-3">
-                <input type="date" v-model="purchaseDate" class="form-control" placeholder="Date of Purchase" />
-                <label>Date of Purchase</label>
-              </div>
-
-              <div class="form-floating mb-3">
-                <input type="text" v-model="recipient" class="form-control" placeholder="Enter Recipient" />
-                <label>Enter Recipient</label>
-              </div>
-
-              <div class="form-floating mb-3">
-                <select v-model="classification" class="form-select">
-                  <option value="SE">(SE) Semi-Expendable</option>
-                  <option value="PPE">(PPE) Property, Plant & Equipment</option>
-                </select>
-                <label>Select Classification</label>
-              </div>
-
-              <div class="text-end">
-                <button type="submit" class="btn btn-success px-4">Add Item</button>
+              <div class="text-end mt-4">
+                <button type="submit" class="btn btn-success w-100">Add Item</button>
               </div>
             </form>
           </div>
@@ -58,43 +73,19 @@
       </div>
     </div>
 
-    <!-- Confirmation Modal with QR Code -->
-    <div class="modal fade" id="addItemSuccessModal" tabindex="-1" aria-labelledby="addItemSuccessModalLabel" aria-hidden="true">
+    <!-- ✅ Success Modal (new) -->
+    <div class="modal fade" id="addItemSuccessModal" tabindex="-1" aria-hidden="true">
       <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content p-4">
-          <div class="modal-header">
-            <h5 class="modal-title" id="addItemSuccessModalLabel">Item Added</h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" @click="handleSuccessModalClose"></button>
-          </div>
+        <div class="modal-content text-center p-4">
           <div class="modal-body">
-            <div class="row">
-              <!-- Left side: QR code -->
-              <div class="col-md-6 d-flex justify-content-center align-items-center border-end">
-                <img 
-                  v-if="qrCodeUrl" 
-                  :src="generatedQRImage" 
-                  alt="QR Code" 
-                  class="img-fluid" 
-                  width="150" 
-                  height="auto" 
-                />
-              </div>
-
-              <!-- Right side: message and buttons -->
-              <div class="col-md-6 d-flex flex-column justify-content-center align-items-end ps-4">
-                <p class="mb-3 text-end w-100">Thank you! Your item has been added successfully.</p>
-                <div>
-                  <button v-if="qrCodeUrl" @click="downloadQR" class="btn btn-outline-primary me-2">Download QR</button>
-                  <button v-if="qrCodeUrl" @click="printQR" class="btn btn-outline-secondary">Print QR</button>
-                </div>
-              </div>
-            </div>
+            <h5 class="mb-3">Item successfully added!</h5>
+            <button type="button" class="btn btn-primary w-100" data-bs-dismiss="modal">OK</button>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Hidden Canvas -->
+    <!-- Hidden Canvas for QR Label Rendering -->
     <canvas ref="qrCanvas" style="display: none;"></canvas>
   </div>
 </template>
