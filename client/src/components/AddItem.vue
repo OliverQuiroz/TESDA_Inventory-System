@@ -72,11 +72,11 @@
               <div class="col-md-6 d-flex justify-content-center align-items-center border-end">
                 <img 
                   v-if="qrCodeUrl" 
-                  :src="getFullImageUrl(qrCodeUrl)" 
+                  :src="generatedQRImage" 
                   alt="QR Code" 
                   class="img-fluid" 
                   width="150" 
-                  height="150" 
+                  height="auto" 
                 />
               </div>
 
@@ -93,11 +93,14 @@
         </div>
       </div>
     </div>
+
+    <!-- Hidden Canvas -->
+    <canvas ref="qrCanvas" style="display: none;"></canvas>
   </div>
 </template>
 
 <script>
-import { ref, onMounted } from "vue";
+import { ref, onMounted, watch } from "vue";
 import { Modal } from "bootstrap";
 
 export default {
@@ -112,7 +115,9 @@ export default {
     const recipient = ref("");
     const classification = ref("");
     const qrCodeUrl = ref(null);
-    const savedProductName = ref(""); // ✅ Store product name for download/print
+    const savedProductName = ref("");
+    const qrCanvas = ref(null);
+    const generatedQRImage = ref("");
 
     const addItem = async () => {
       if (!inventoryNumber.value) {
@@ -125,7 +130,7 @@ export default {
       const duplicateItem = items.find(item => item.inventory_number === inventoryNumber.value);
 
       if (duplicateItem) {
-        alert("Item with this inventory number already exists! Please enter a different number.");
+        alert("Item with this inventory number already exists!");
         return;
       }
 
@@ -154,7 +159,7 @@ export default {
         }
 
         qrCodeUrl.value = data.qr_code;
-        savedProductName.value = productName.value; // ✅ Save product name
+        savedProductName.value = productName.value;
 
         const addItemModalEl = document.getElementById("addItemModal");
         if (addItemModalEl) {
@@ -168,7 +173,6 @@ export default {
 
         emit("item-added");
 
-        // ✅ Clear form after saving product name
         inventoryNumber.value = "";
         productName.value = "";
         description.value = "";
@@ -189,50 +193,79 @@ export default {
       }, 200);
       qrCodeUrl.value = null;
       savedProductName.value = "";
+      generatedQRImage.value = "";
     };
 
     const getFullImageUrl = (path) => {
       return `http://127.0.0.1:8000${path}`;
     };
 
-    const downloadQR = async () => {
+    const renderQRWithLabel = async () => {
       if (!qrCodeUrl.value) return;
-      try {
-        const fullUrl = getFullImageUrl(qrCodeUrl.value);
-        const response = await fetch(fullUrl);
-        const blob = await response.blob();
-        const blobUrl = URL.createObjectURL(blob);
 
-        const rawName = savedProductName.value?.trim() || "qr_code";
-        const safeFileName = rawName.replace(/[^a-zA-Z0-9-_]/g, "_");
+      const imageUrl = getFullImageUrl(qrCodeUrl.value);
+      const label = savedProductName.value || "QR Code";
 
-        const link = document.createElement("a");
-        link.href = blobUrl;
-        link.download = `${safeFileName}.png`;
-        document.body.appendChild(link);
-        link.click();
+      return new Promise((resolve) => {
+        const img = new Image();
+        img.crossOrigin = "anonymous";
+        img.onload = () => {
+          const canvas = qrCanvas.value;
+          const ctx = canvas.getContext("2d");
 
-        document.body.removeChild(link);
-        URL.revokeObjectURL(blobUrl);
-      } catch (error) {
-        console.error("Download error:", error);
-        alert("Failed to download QR code.");
-      }
+          const padding = 10;
+          const fontSize = 36;
+          const font = `${fontSize}px Arial`;
+
+          canvas.width = img.width;
+          canvas.height = img.height + fontSize + padding;
+
+          ctx.fillStyle = "#FFFFFF";
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+          ctx.drawImage(img, 0, 0);
+
+          ctx.font = font;
+          ctx.fillStyle = "#000000";
+          ctx.textAlign = "center";
+          ctx.fillText(label, canvas.width / 2, img.height + fontSize);
+
+          const dataURL = canvas.toDataURL("image/png");
+          generatedQRImage.value = dataURL;
+
+          resolve(dataURL);
+        };
+        img.src = imageUrl;
+      });
     };
 
-    const printQR = () => {
-      if (!qrCodeUrl.value) return;
-      const imageUrl = getFullImageUrl(qrCodeUrl.value);
+    const downloadQR = async () => {
+      const dataUrl = await renderQRWithLabel();
+      if (!dataUrl) return;
+
+      const rawName = savedProductName.value?.trim() || "qr_code";
+      const safeFileName = rawName.replace(/[^a-zA-Z0-9-_]/g, "_");
+
+      const link = document.createElement("a");
+      link.href = dataUrl;
+      link.download = `${safeFileName}.png`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    };
+
+    const printQR = async () => {
+      const dataUrl = await renderQRWithLabel();
+      if (!dataUrl) return;
+
       const title = savedProductName.value || "QR Code";
       const printWindow = window.open("", "_blank");
       printWindow.document.write(`
         <html>
-          <head>
-            <title>Print QR Code</title>
-          </head>
+          <head><title>Print QR Code</title></head>
           <body style="text-align:center; padding:20px;">
             <h3>QR Code for ${title}</h3>
-            <img src="${imageUrl}" style="width:200px; height:200px;" />
+            <img src="${dataUrl}" style="width:200px; height:auto;" />
             <script>
               window.onload = () => {
                 window.print();
@@ -243,6 +276,12 @@ export default {
         </html>
       `);
     };
+
+    watch(qrCodeUrl, async (newVal) => {
+      if (newVal) {
+        await renderQRWithLabel();
+      }
+    });
 
     onMounted(() => {
       const successModalEl = document.getElementById("addItemSuccessModal");
@@ -265,6 +304,8 @@ export default {
       getFullImageUrl,
       downloadQR,
       printQR,
+      qrCanvas,
+      generatedQRImage,
     };
   },
 };
