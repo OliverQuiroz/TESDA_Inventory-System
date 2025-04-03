@@ -1,5 +1,5 @@
 <template>
-  <div class="container mt-4">
+  <div class="container-fluid mt-4 px-5">
     <div class="row mb-4">
       <!-- Total Registered Items -->
       <div class="col-md-4">
