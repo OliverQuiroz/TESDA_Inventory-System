@@ -47,17 +47,15 @@
               <p>{{ formatCreatedAt(selectedItem?.created_at) }}</p>
 
               <p class="text-center">
-                <!-- Larger QR code -->
                 <img
-                  v-if="selectedItem?.qr_code"
-                  :src="getFullImageUrl(selectedItem.qr_code)"
-                  alt="QR Code"
+                  v-if="qrImage"
+                  :src="qrImage"
+                  alt="QR Code with Label"
                   width="200"
-                  height="200"
+                  height="auto"
                 />
               </p>
               <p class="text-center">
-                <!-- Download Button -->
                 <button class="btn btn-primary" @click="downloadQR">
                   Download QR Code
                 </button>
@@ -67,6 +65,9 @@
         </div>
       </div>
     </div>
+
+    <!-- Hidden Canvas -->
+    <canvas ref="qrCanvas" style="display: none;"></canvas>
   </div>
 
 </template>
@@ -81,6 +82,23 @@ export default {
     },
   },
   emits: ["edit-requested"],
+  data() {
+    return {
+      qrImage: "", // Holds the canvas-rendered QR image with label
+    };
+  },
+  watch: {
+    selectedItem: {
+      immediate: true,
+      handler(newVal) {
+        if (newVal?.qr_code) {
+          this.generateLabeledQR();
+        } else {
+          this.qrImage = "";
+        }
+      },
+    },
+  },
   methods: {
     emitEditRequest() {
       this.$emit("edit-requested");
@@ -112,32 +130,56 @@ export default {
         hour12: true,
       });
     },
+        
+    async generateLabeledQR() {
+      const path = this.selectedItem?.qr_code;
+      const productName = this.selectedItem?.product_name || "QR Code";
+      if (!path) return;
+
+      const imageUrl = this.getFullImageUrl(path);
+
+      const img = new Image();
+      img.crossOrigin = "anonymous";
+
+      img.onload = () => {
+        const canvas = this.$refs.qrCanvas;
+        const ctx = canvas.getContext("2d");
+
+        const padding = 10;
+        const fontSize = 36;
+        const font = `${fontSize}px Arial`;
+
+        canvas.width = img.width;
+        canvas.height = img.height + fontSize + padding;
+
+        ctx.fillStyle = "#FFFFFF";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(img, 0, 0);
+
+        ctx.font = font;
+        ctx.fillStyle = "#000000";
+        ctx.textAlign = "center";
+        ctx.fillText(productName, canvas.width / 2, img.height + fontSize);
+
+        this.qrImage = canvas.toDataURL("image/png");
+      };
+
+      img.src = imageUrl;
+    },
     async downloadQR() {
-      if (!this.selectedItem?.qr_code) return;
-      try {
-        const fullUrl = this.getFullImageUrl(this.selectedItem.qr_code);
-        const response = await fetch(fullUrl);
-        const blob = await response.blob();
-        const blobUrl = URL.createObjectURL(blob);
-
-        // Format product name for filename
-        const productName = this.selectedItem?.product_name || "qr_code";
-        const safeFileName = productName.replace(/[^a-zA-Z0-9_-]/g, "_");
-
-        // Create a temporary download link
-        const link = document.createElement("a");
-        link.href = blobUrl;
-        link.download = `${safeFileName}.png`;
-        document.body.appendChild(link);
-        link.click();
-
-        // Cleanup
-        document.body.removeChild(link);
-        URL.revokeObjectURL(blobUrl);
-      } catch (error) {
-        console.error("Download error:", error);
-        alert("Failed to download QR code.");
+      if (!this.qrImage) {
+        await this.generateLabeledQR();
       }
+
+      const productName = this.selectedItem?.product_name || "qr_code";
+      const safeFileName = productName.replace(/[^a-zA-Z0-9_-]/g, "_");
+
+      const link = document.createElement("a");
+      link.href = this.qrImage;
+      link.download = `${safeFileName}.png`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
     },
   },
 };
