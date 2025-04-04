@@ -76,7 +76,7 @@
             </td>
             <td>
               <button
-                class="btn btn-sm btn-outline-warning me-1"
+                class="btn btn-sm btn-outline-info me-1"
                 @click.stop="openEditModalFromTable(item)"
                 title="Edit"
               >

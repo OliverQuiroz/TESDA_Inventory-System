@@ -39,7 +39,7 @@
 </template>
 
 <script>
-import { ref, onMounted } from "vue";
+import { ref, onMounted, onBeforeUnmount } from "vue";
 import axios from "axios";
 import { useRouter } from "vue-router";
 
@@ -55,23 +55,26 @@ export default {
       document.body.style.overflow = "hidden";
     });
 
+    onBeforeUnmount(() => {
+      document.body.style.overflow = "auto";
+    });
+
+
     const login = async () => {
       console.log("Logging in with:", { username: username.value, password: password.value });
       try {
         const response = await axios.post(
           "http://127.0.0.1:8000/api/login/",
           {
-            // Send the username value as "email" to match Django view expectations.
             email: username.value,
             password: password.value,
           },
           { withCredentials: true }
         );
-
-        if (response.data.token) {
-          localStorage.setItem("userToken", response.data.token);
-          router.push("/home");
-        } else if (response.data.success) {
+        
+        if (response.data.token || response.data.success) {
+          document.body.style.overflow = "auto"; // ✅ Restore scroll
+          localStorage.setItem("userToken", response.data.token || "");
           localStorage.setItem("isAuthenticated", "true");
           router.push("/home");
         } else {
