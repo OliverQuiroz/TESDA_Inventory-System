@@ -1,93 +1,113 @@
 <template>
   <div class="container-fluid mt-4 px-5">
+    <!-- ─── SUMMARY CARDS ─── -->
     <div class="row mb-4">
-      <!-- Total Registered Items -->
       <div class="col-md-4">
         <div class="card text-center p-3 filter-card" @click="filterBy('all')">
           <h4>{{ items.length }}</h4>
           <p>Total Registered Items</p>
         </div>
       </div>
-
       <div class="col-md-4">
         <div class="card text-center p-3 filter-card" @click="filterBy('SE')">
           <h4>{{ seCount }}</h4>
           <p>(SE) Semi-Expendable</p>
         </div>
       </div>
-
       <div class="col-md-4">
         <div class="card text-center p-3 filter-card" @click="filterBy('PPE')">
           <h4>{{ ppeCount }}</h4>
-          <p>(PPE) Property-Plant & Equipment</p>
+          <p>(PPE) Property-Plant &amp; Equipment</p>
         </div>
       </div>
     </div>
 
-    <!-- Search box -->
+    <!-- ─── SEARCH ─── -->
     <div class="d-flex justify-content-center mb-3">
-      <input
-        v-model="searchQuery"
-        type="text"
-        class="form-control w-50 text-center"
-        placeholder="Search"
-      />
+      <input v-model="searchQuery" class="form-control w-50 text-center" placeholder="Search" />
     </div>
 
-    <!-- Items Table with fixed height -->
+    <!-- ─── ITEMS TABLE ─── -->
     <div class="table-wrapper">
-      <table class="table table-bordered text-center">
-        <thead>
+      <table class="table table-bordered align-middle text-center table-squish">
+        <thead class="table-light small">
           <tr>
-            <th>Inventory Number</th>
-            <th>Product Name</th>
-            <th>Description</th>
-            <th>Price</th>
-            <th>Date of Purchase</th>
-            <th>Memorandum of Receipt (MR)</th>
-            <th>Classification</th>
-            <th>QR Code</th>
-            <th>Actions</th>
+            <th>Date<br />of Acq.</th>
+            <th>Accountable<br />Person</th>
+            <th>Fund</th>
+            <th>Article</th>
+            <th class="w-desc">Description</th>
+            <th>UACS Code</th>
+            <th>Category<br />(UACS)</th>
+            <th class="text-end">Unit Cost</th>
+            <th class="text-end">Qty</th>
+            <th class="text-end">Total Cost</th>
+            <th>Unit</th>
+            <th>Location</th>
+            <th>Property No.</th>
+            <th>ICS No.</th>
+            <th>Date of PO</th>
+            <th>PO #</th>
+            <th>Supplier</th>
+            <th style="width:34px;">Actions</th>
           </tr>
         </thead>
+
         <tbody>
           <tr
-            v-for="(item, index) in paginatedItems"
-            :key="index"
-            @click="openModal(item)"
+            v-for="item in paginatedItems"
+            :key="item.id"
             class="clickable-row"
+            @click="openModal(item)"
             :class="{ 'table-success animate-highlight': item.id === updatedItemId }"
           >
-            <td>{{ item.inventory_number }}</td>
-            <td>{{ item.product_name }}</td>
-            <td>{{ truncateText(item.description, 30) }}</td>
-            <td>₱ {{ formatPrice(item.price) }}</td>
-            <td>{{ item.date_of_purchase }}</td>
-            <td>{{ item.recipient }}</td>
-            <td>{{ item.classification }}</td>
+            <td>{{ formatDate(item.date_of_acquisition) }}</td>
+            <td>{{ item.accountable_person }}</td>
+            <td>{{ item.fund }}</td>
+            <td>{{ item.article }}</td>
+
+            <td class="text-wrap w-desc">{{ truncateText(item.description, 60) }}</td>
+
             <td>
-              <img
-                v-if="item.qr_code"
-                :src="getFullImageUrl(item.qr_code)"
-                alt="QR Code"
-                width="50"
-                height="50"
-              />
+              <span class="d-inline-block text-truncate w-110" :title="item.uacs_code">
+                {{ item.uacs_code }}
+              </span>
             </td>
+
+            <td>{{ item.uacs_category }}</td>
+
+            <td class="text-end" v-html="formatPriceHTML(item.unit_cost)"></td>
+            <td class="text-end">{{ item.quantity }}</td>
+            <td class="text-end" v-html="formatPriceHTML(item.total_cost)"></td>
+
+            <td>{{ item.unit }}</td>
+            <td>{{ item.location }}</td>
+
             <td>
+              <span class="d-inline-block text-truncate w-110" :title="item.property_number">
+                {{ item.property_number }}
+              </span>
+            </td>
+
+            <td>{{ item.ics_number }}</td>
+            <td>{{ formatDate(item.date_of_po) }}</td>
+
+            <td>
+              <span class="d-inline-block text-truncate w-100" :title="item.po_number">
+                {{ item.po_number }}
+              </span>
+            </td>
+
+            <td>{{ item.supplier_name }}</td>
+
+            <!-- EDIT button only -->
+            <td class="p-1">
               <button
-                class="btn btn-sm btn-outline-info me-1"
+                class="btn btn-icon btn-icon-edit btn-outline-info"
                 @click.stop="openEditModalFromTable(item)"
                 title="Edit"
               >
                 <i class="bi bi-pencil-square"></i>
-              </button>
-              <button
-                class="btn btn-sm btn-outline-danger"
-                @click.stop="deleteItem(item.id)"
-                title="Delete"
-              >
-                <i class="bi bi-trash"></i>
               </button>
             </td>
           </tr>
@@ -95,46 +115,34 @@
       </table>
     </div>
 
-    <!-- Pagination + Add Item -->
+    <!-- ─── PAGINATION + ADD ─── -->
     <div class="d-flex justify-content-between align-items-center mt-3 pagination-footer">
       <nav>
-        <ul class="pagination">
+        <ul class="pagination mb-0">
           <li class="page-item" :class="{ disabled: currentPage === 1 }">
-            <button class="page-link" @click="changePage(currentPage - 1)">
-              &larr; Previous
-            </button>
+            <button class="page-link" @click="changePage(currentPage - 1)">&larr; Prev</button>
           </li>
-
           <li
             v-for="page in visiblePages"
             :key="page"
             class="page-item"
             :class="{ active: page === currentPage, disabled: page === '...' }"
           >
-            <button
-              v-if="page !== '...'"
-              class="page-link"
-              @click="changePage(page)"
-            >
+            <button v-if="page !== '...'" class="page-link" @click="changePage(page)">
               {{ page }}
             </button>
-            <span v-else class="page-link">...</span>
+            <span v-else class="page-link">…</span>
           </li>
-
           <li class="page-item" :class="{ disabled: currentPage === totalPages }">
-            <button class="page-link" @click="changePage(currentPage + 1)">
-              Next &rarr;
-            </button>
+            <button class="page-link" @click="changePage(currentPage + 1)">Next &rarr;</button>
           </li>
         </ul>
       </nav>
 
-      <button class="btn btn-primary" @click="openAddItemModal">
-        Add Item
-      </button>
+      <button class="btn btn-primary" @click="openAddItemModal">Add Item</button>
     </div>
 
-    <!-- Modals -->
+    <!-- ─── MODALS ─── -->
     <AddItemModal @item-added="fetchItems" />
     <ItemDetails :selectedItem="selectedItem" @edit-requested="openEditModal" />
     <EditItem :selectedItem="selectedItem" @item-updated="fetchItems" />
@@ -142,49 +150,51 @@
 </template>
 
 <script>
-import AddItemModal from "@/components/AddItem.vue";
-import EditItem from "@/components/EditItem.vue";
-import ItemDetails from "@/components/ItemDetails.vue";
-import { Modal } from "bootstrap";
+import AddItemModal  from "@/components/AddItem.vue";
+import EditItem      from "@/components/EditItem.vue";
+import ItemDetails   from "@/components/ItemDetails.vue";
+import { Modal }     from "bootstrap";
 
 export default {
   name: "HomePage",
-  components: {
-    AddItemModal,
-    EditItem,
-    ItemDetails,
-  },
+  components: { AddItemModal, EditItem, ItemDetails },
+
+  /* ---------- data ---------- */
   data() {
     return {
-      items: [],
-      updatedItemId: null,
-      currentPage: 1,
-      itemsPerPage: 7,
-      searchQuery: "",
-      selectedFilter: "all",
-      selectedItem: {},
+      items:           [],
+      updatedItemId:   null,
+      currentPage:     1,
+      itemsPerPage:    7,
+      searchQuery:     "",
+      selectedFilter:  "all",
+      selectedItem:    {},
     };
   },
+
+  /* ---------- computed ---------- */
   computed: {
     filteredItems() {
-      let filtered = this.items.filter(
-        (item) =>
-          this.selectedFilter === "all" ||
-          item.classification === this.selectedFilter
+      let list =
+        this.selectedFilter === "all"
+          ? this.items
+          : this.items.filter((i) => i.uacs_category === this.selectedFilter);
+
+      const q = this.searchQuery.toLowerCase();
+      list = list.filter((i) =>
+        [
+          i.article,
+          i.property_number,
+          i.accountable_person,
+          i.location,
+          i.uacs_category,
+        ]
+          .join(" ")
+          .toLowerCase()
+          .includes(q)
       );
 
-      const query = this.searchQuery.toLowerCase();
-      filtered = filtered.filter((item) => {
-        return (
-          item.product_name.toLowerCase().includes(query) ||
-          item.inventory_number.toLowerCase().includes(query) ||
-          item.recipient.toLowerCase().includes(query) ||
-          item.classification.toLowerCase().includes(query)
-        );
-      });
-
-      filtered.sort((a, b) => b.id - a.id);
-      return filtered;
+      return list.sort((a, b) => b.id - a.id);
     },
     totalPages() {
       return Math.ceil(this.filteredItems.length / this.itemsPerPage);
@@ -194,155 +204,98 @@ export default {
       return this.filteredItems.slice(start, start + this.itemsPerPage);
     },
     visiblePages() {
-      const total = this.totalPages;
-      const maxVisible = 7;
-      const tailVisible = 3;
-      let pages = [];
-
-      if (total <= maxVisible + tailVisible + 1) {
-        for (let i = 1; i <= total; i++) pages.push(i);
-      } else {
-        for (let i = 1; i <= maxVisible; i++) pages.push(i);
-        pages.push("...");
-        for (let i = total - tailVisible + 1; i <= total; i++) {
-          pages.push(i);
-        }
-      }
-
-      return pages;
+      const total = this.totalPages, max = 7, tail = 3;
+      if (total <= max + tail + 1) return [...Array(total).keys()].map((n) => n + 1);
+      return [
+        ...[...Array(max).keys()].map((n) => n + 1),
+        "...",
+        ...[...Array(tail).keys()].map((n) => total - tail + n + 1),
+      ];
     },
-    seCount() {
-      return this.items.filter((item) => item.classification === "SE").length;
-    },
-    ppeCount() {
-      return this.items.filter((item) => item.classification === "PPE").length;
-    },
+    seCount()  { return this.items.filter((i) => i.uacs_category === "SE").length; },
+    ppeCount() { return this.items.filter((i) => i.uacs_category === "PPE").length; },
   },
-  methods: {
-    async fetchItems(updatedItemId = null) {
-      try {
-        const response = await fetch("http://127.0.0.1:8000/api/items/");
-        if (!response.ok) {
-          throw new Error("Failed to fetch items");
-        }
-        this.items = await response.json();
-        this.currentPage = 1;
 
-        if (updatedItemId) {
-          this.updatedItemId = updatedItemId;
-          setTimeout(() => {
-            this.updatedItemId = null;
-          }, 3000);
+  /* ---------- methods ---------- */
+  methods: {
+    async fetchItems(highlightId = null) {
+      try {
+        const res = await fetch("http://127.0.0.1:8000/api/items/");
+        if (!res.ok) throw new Error();
+        this.items = await res.json();
+        this.currentPage = 1;
+        if (highlightId) {
+          this.updatedItemId = highlightId;
+          setTimeout(() => (this.updatedItemId = null), 3000);
         }
-      } catch (error) {
-        console.error("fetchItems error:", error);
+      } catch (e) {
+        console.error(e);
       }
     },
-    filterBy(type) {
-      this.selectedFilter = type;
-      this.currentPage = 1;
-    },
+    filterBy(cat) { this.selectedFilter = cat; this.currentPage = 1; },
     openModal(item) {
-      this.selectedItem = item || {};
-      const modalElement = document.getElementById("itemModal");
-      const modal = new Modal(modalElement);
-      modal.show();
-    },
-    openEditModal() {
-      this.$nextTick(() => {
-        const editModalEl = document.getElementById("editItemModal");
-        if (!editModalEl) {
-          console.error("Error: EditItem modal element not found!");
-          return;
-        }
-        const editModal = new Modal(editModalEl, { backdrop: "static" });
-        editModal.show();
-      });
+      this.selectedItem = item;
+      new Modal(document.getElementById("itemModal")).show();
     },
     openEditModalFromTable(item) {
       this.selectedItem = item;
-      this.openEditModal();
-    },
-    async deleteItem(id) {
-      if (!confirm("Are you sure you want to delete this item?")) return;
-      try {
-        const response = await fetch(`http://127.0.0.1:8000/api/items/${id}/`, {
-          method: "DELETE",
-        });
-        if (!response.ok) throw new Error("Failed to delete item");
-        await this.fetchItems();
-      } catch (err) {
-        console.error("Delete error:", err);
-        alert("Failed to delete the item.");
-      }
+      this.$nextTick(() =>
+        new Modal(document.getElementById("editItemModal"), { backdrop: "static" }).show()
+      );
     },
     openAddItemModal() {
-      document.querySelectorAll(".modal-backdrop").forEach((backdrop) =>
-        backdrop.remove()
+      document.querySelectorAll(".modal-backdrop").forEach((b) => b.remove());
+      new Modal(document.getElementById("addItemModal")).show();
+    },
+    changePage(p) { if (p >= 1 && p <= this.totalPages) this.currentPage = p; },
+
+    /* ----- helpers ----- */
+    formatPriceHTML(value) {
+      const n = new Intl.NumberFormat("en-PH", { minimumFractionDigits: 2 }).format(
+        parseFloat(value) || 0
       );
-      const addItemModalEl = document.getElementById("addItemModal");
-      if (addItemModalEl) {
-        new Modal(addItemModalEl).show();
-      }
+      return `₱&nbsp;${n.replace(/,/g, ",<wbr>")}`;
     },
-    changePage(page) {
-      if (page >= 1 && page <= this.totalPages) {
-        this.currentPage = page;
-      }
+    formatDate(raw) {
+      if (!raw) return "";
+      return new Date(raw).toLocaleDateString("en-GB", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+      });
     },
-    getFullImageUrl(path) {
-      return `http://127.0.0.1:8000${path}`;
-    },
-    formatPrice(value) {
-      const num = parseFloat(value) || 0;
-      return new Intl.NumberFormat("en-US", {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-      }).format(num);
-    },
-    truncateText(text, maxLength) {
-      if (!text) return "";
-      return text.length > maxLength ? text.substring(0, maxLength) + "..." : text;
-    },
+    truncateText(txt, len) { return !txt ? "" : txt.length > len ? txt.slice(0, len) + "…" : txt; },
   },
-  async mounted() {
-    await this.fetchItems();
-  },
+
+  mounted() { this.fetchItems(); },
 };
 </script>
 
-<style>
-.clickable-row {
-  cursor: pointer;
-}
-.filter-card {
-  cursor: pointer;
-  transition: 0.3s;
-}
-.filter-card:hover {
-  background-color: #f8f9fa;
-  transform: scale(1.05);
-}
-@keyframes fadeHighlight {
-  0% {
-    background-color: #ff94df;
-  }
-  100% {
-    background-color: transparent;
-  }
-}
-.animate-highlight {
-  animation: fadeHighlight 0.1s ease-in-out;
-}
+<style scoped>
+/* font squeeze */
+.table-squish th,
+.table-squish td { font-size: 0.85rem; }
 
-.table-wrapper {
-  min-height: 530px;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-}
+/* wider description */
+.w-desc { max-width: 240px; word-break: break-word; }
 
-.pagination-footer {
-  min-height: 58px;
-}
+/* truncation helpers */
+.w-110 { max-width: 110px; }
+.w-100 { max-width: 100px; }
+
+/* icon button sizing */
+.btn-icon      { padding: 0.23rem 0.35rem; line-height: 1; }
+.btn-icon-edit { font-size: 1rem;  padding: 0.4rem 0.35rem; }
+
+/* interactive */
+.clickable-row { cursor: pointer; }
+.filter-card   { cursor: pointer; transition: 0.3s; }
+.filter-card:hover { background:#f8f9fa; transform: scale(1.05); }
+
+@keyframes fadeHighlight { 0%{background:#ff94df;} 100%{background:transparent;} }
+.animate-highlight { animation: fadeHighlight 0.2s ease-in-out; }
+
+/* layout */
+.table-wrapper     { min-height: 530px; display:flex; flex-direction:column; }
+.pagination-footer { min-height: 58px; }
 </style>
