@@ -3,28 +3,75 @@
     <!-- ─── SUMMARY CARDS ─── -->
     <div class="row mb-4">
       <div class="col-md-4">
-        <div class="card text-center p-3 filter-card" @click="filterBy('all')">
+        <div
+          class="card text-center p-3 filter-card"
+          :class="{ 'active-filter': selectedFilter === 'all' }"
+          @click="filterBy('all')"
+        >
           <h4>{{ items.length }}</h4>
           <p>Total Registered Items</p>
         </div>
       </div>
       <div class="col-md-4">
-        <div class="card text-center p-3 filter-card" @click="filterBy('SE')">
+        <div
+          class="card text-center p-3 filter-card"
+          :class="{ 'active-filter': selectedFilter === 'SE' }"
+          @click="filterBy('SE')"
+        >
           <h4>{{ seCount }}</h4>
           <p>(SE) Semi-Expendable</p>
         </div>
       </div>
       <div class="col-md-4">
-        <div class="card text-center p-3 filter-card" @click="filterBy('PPE')">
+        <div
+          class="card text-center p-3 filter-card"
+          :class="{ 'active-filter': selectedFilter === 'PPE' }"
+          @click="filterBy('PPE')"
+        >
           <h4>{{ ppeCount }}</h4>
-          <p>(PPE) Property-Plant &amp; Equipment</p>
+          <p>(PPE) Property-Plant & Equipment</p>
         </div>
       </div>
     </div>
 
-    <!-- ─── SEARCH ─── -->
-    <div class="d-flex justify-content-center mb-3">
-      <input v-model="searchQuery" class="form-control w-50 text-center" placeholder="Search" />
+    <!-- ─── SINGLE ROW FILTER BAR ─── -->
+    <div class="d-flex align-items-center gap-2 overflow-auto mb-4" style="white-space: nowrap;">
+      <!-- Prev/Next Buttons -->
+      <div class="btn-group" role="group">
+        <button
+          class="btn btn-outline-secondary btn-sm"
+          :disabled="currentPage === 1"
+          @click="changePage(currentPage - 1)"
+        >
+          ← Prev
+        </button>
+        <button
+          class="btn btn-outline-secondary btn-sm"
+          :disabled="currentPage === totalPages"
+          @click="changePage(currentPage + 1)"
+        >
+          Next →
+        </button>
+      </div>
+
+      <!-- Search Bar -->
+      <input
+        v-model="searchQuery"
+        class="form-control"
+        placeholder="Search"
+        style="width: 1000px; min-width: 250px;"
+      />
+
+      <!-- Month Filter -->
+      <select v-model="selectedMonth" class="form-select" style="width: 160px;">
+        <option value="">All Months</option>
+        <option v-for="m in monthOptions" :key="m.value" :value="m.value">{{ m.label }}</option>
+      </select>
+
+      <!-- Add Item Button -->
+      <button class="btn btn-primary btn-sm" @click="openAddItemModal" style="min-width: 120px;">
+        Add Item
+      </button>
     </div>
 
     <!-- ─── ITEMS TABLE ─── -->
@@ -65,42 +112,31 @@
             <td>{{ item.accountable_person }}</td>
             <td>{{ item.fund }}</td>
             <td>{{ item.article }}</td>
-
             <td class="text-wrap w-desc">{{ truncateText(item.description, 60) }}</td>
-
             <td>
               <span class="d-inline-block text-truncate w-110" :title="item.uacs_code">
                 {{ item.uacs_code }}
               </span>
             </td>
-
             <td>{{ item.uacs_category }}</td>
-
             <td class="text-end" v-html="formatPriceHTML(item.unit_cost)"></td>
             <td class="text-end">{{ item.quantity }}</td>
             <td class="text-end" v-html="formatPriceHTML(item.total_cost)"></td>
-
             <td>{{ item.unit }}</td>
             <td>{{ item.location }}</td>
-
             <td>
               <span class="d-inline-block text-truncate w-110" :title="item.property_number">
                 {{ item.property_number }}
               </span>
             </td>
-
             <td>{{ item.ics_number }}</td>
             <td>{{ formatDate(item.date_of_po) }}</td>
-
             <td>
               <span class="d-inline-block text-truncate w-100" :title="item.po_number">
                 {{ item.po_number }}
               </span>
             </td>
-
             <td>{{ item.supplier_name }}</td>
-
-            <!-- EDIT button only -->
             <td class="p-1">
               <button
                 class="btn btn-icon btn-icon-edit btn-outline-info"
@@ -111,35 +147,11 @@
               </button>
             </td>
           </tr>
+          <tr v-if="paginatedItems.length === 0">
+            <td colspan="18" class="text-muted text-center">No items found.</td>
+          </tr>
         </tbody>
       </table>
-    </div>
-
-    <!-- ─── PAGINATION + ADD ─── -->
-    <div class="d-flex justify-content-between align-items-center mt-3 pagination-footer">
-      <nav>
-        <ul class="pagination mb-0">
-          <li class="page-item" :class="{ disabled: currentPage === 1 }">
-            <button class="page-link" @click="changePage(currentPage - 1)">&larr; Prev</button>
-          </li>
-          <li
-            v-for="page in visiblePages"
-            :key="page"
-            class="page-item"
-            :class="{ active: page === currentPage, disabled: page === '...' }"
-          >
-            <button v-if="page !== '...'" class="page-link" @click="changePage(page)">
-              {{ page }}
-            </button>
-            <span v-else class="page-link">…</span>
-          </li>
-          <li class="page-item" :class="{ disabled: currentPage === totalPages }">
-            <button class="page-link" @click="changePage(currentPage + 1)">Next &rarr;</button>
-          </li>
-        </ul>
-      </nav>
-
-      <button class="btn btn-primary" @click="openAddItemModal">Add Item</button>
     </div>
 
     <!-- ─── MODALS ─── -->
@@ -149,36 +161,56 @@
   </div>
 </template>
 
+
 <script>
-import AddItemModal  from "@/components/AddItem.vue";
-import EditItem      from "@/components/EditItem.vue";
-import ItemDetails   from "@/components/ItemDetails.vue";
-import { Modal }     from "bootstrap";
+import AddItemModal from "@/components/AddItem.vue";
+import EditItem from "@/components/EditItem.vue";
+import ItemDetails from "@/components/ItemDetails.vue";
+import { Modal } from "bootstrap";
 
 export default {
   name: "HomePage",
   components: { AddItemModal, EditItem, ItemDetails },
-
-  /* ---------- data ---------- */
   data() {
     return {
-      items:           [],
-      updatedItemId:   null,
-      currentPage:     1,
-      itemsPerPage:    7,
-      searchQuery:     "",
-      selectedFilter:  "all",
-      selectedItem:    {},
+      items: [],
+      updatedItemId: null,
+      currentPage: 1,
+      itemsPerPage: 7,
+      searchQuery: "",
+      selectedFilter: "all",
+      selectedMonth: "",
+      selectedItem: {},
+      monthOptions: [
+        { value: "01", label: "January" },
+        { value: "02", label: "February" },
+        { value: "03", label: "March" },
+        { value: "04", label: "April" },
+        { value: "05", label: "May" },
+        { value: "06", label: "June" },
+        { value: "07", label: "July" },
+        { value: "08", label: "August" },
+        { value: "09", label: "September" },
+        { value: "10", label: "October" },
+        { value: "11", label: "November" },
+        { value: "12", label: "December" },
+      ],
     };
   },
-
-  /* ---------- computed ---------- */
   computed: {
     filteredItems() {
       let list =
         this.selectedFilter === "all"
           ? this.items
           : this.items.filter((i) => i.uacs_category === this.selectedFilter);
+
+      if (this.selectedMonth) {
+        list = list.filter((i) => {
+          const date = new Date(i.date_of_acquisition);
+          const month = String(date.getMonth() + 1).padStart(2, "0");
+          return month === this.selectedMonth;
+        });
+      }
 
       const q = this.searchQuery.toLowerCase();
       list = list.filter((i) =>
@@ -203,20 +235,13 @@ export default {
       const start = (this.currentPage - 1) * this.itemsPerPage;
       return this.filteredItems.slice(start, start + this.itemsPerPage);
     },
-    visiblePages() {
-      const total = this.totalPages, max = 7, tail = 3;
-      if (total <= max + tail + 1) return [...Array(total).keys()].map((n) => n + 1);
-      return [
-        ...[...Array(max).keys()].map((n) => n + 1),
-        "...",
-        ...[...Array(tail).keys()].map((n) => total - tail + n + 1),
-      ];
+    seCount() {
+      return this.items.filter((i) => i.uacs_category === "SE").length;
     },
-    seCount()  { return this.items.filter((i) => i.uacs_category === "SE").length; },
-    ppeCount() { return this.items.filter((i) => i.uacs_category === "PPE").length; },
+    ppeCount() {
+      return this.items.filter((i) => i.uacs_category === "PPE").length;
+    },
   },
-
-  /* ---------- methods ---------- */
   methods: {
     async fetchItems(highlightId = null) {
       try {
@@ -232,7 +257,10 @@ export default {
         console.error(e);
       }
     },
-    filterBy(cat) { this.selectedFilter = cat; this.currentPage = 1; },
+    filterBy(cat) {
+      this.selectedFilter = cat;
+      this.currentPage = 1;
+    },
     openModal(item) {
       this.selectedItem = item;
       new Modal(document.getElementById("itemModal")).show();
@@ -240,20 +268,22 @@ export default {
     openEditModalFromTable(item) {
       this.selectedItem = item;
       this.$nextTick(() =>
-        new Modal(document.getElementById("editItemModal"), { backdrop: "static" }).show()
+        new Modal(document.getElementById("editItemModal"), {
+          backdrop: "static",
+        }).show()
       );
     },
     openAddItemModal() {
       document.querySelectorAll(".modal-backdrop").forEach((b) => b.remove());
       new Modal(document.getElementById("addItemModal")).show();
     },
-    changePage(p) { if (p >= 1 && p <= this.totalPages) this.currentPage = p; },
-
-    /* ----- helpers ----- */
+    changePage(p) {
+      if (p >= 1 && p <= this.totalPages) this.currentPage = p;
+    },
     formatPriceHTML(value) {
-      const n = new Intl.NumberFormat("en-PH", { minimumFractionDigits: 2 }).format(
-        parseFloat(value) || 0
-      );
+      const n = new Intl.NumberFormat("en-PH", {
+        minimumFractionDigits: 2,
+      }).format(parseFloat(value) || 0);
       return `₱&nbsp;${n.replace(/,/g, ",<wbr>")}`;
     },
     formatDate(raw) {
@@ -264,38 +294,80 @@ export default {
         year: "numeric",
       });
     },
-    truncateText(txt, len) { return !txt ? "" : txt.length > len ? txt.slice(0, len) + "…" : txt; },
+    truncateText(txt, len) {
+      return !txt ? "" : txt.length > len ? txt.slice(0, len) + "…" : txt;
+    },
   },
-
-  mounted() { this.fetchItems(); },
+  mounted() {
+    this.fetchItems();
+  },
 };
 </script>
 
+
 <style scoped>
-/* font squeeze */
 .table-squish th,
-.table-squish td { font-size: 0.85rem; }
-
-/* wider description */
-.w-desc { max-width: 240px; word-break: break-word; }
-
-/* truncation helpers */
-.w-110 { max-width: 110px; }
-.w-100 { max-width: 100px; }
-
-/* icon button sizing */
-.btn-icon      { padding: 0.23rem 0.35rem; line-height: 1; }
-.btn-icon-edit { font-size: 1rem;  padding: 0.4rem 0.35rem; }
-
-/* interactive */
-.clickable-row { cursor: pointer; }
-.filter-card   { cursor: pointer; transition: 0.3s; }
-.filter-card:hover { background:#f8f9fa; transform: scale(1.05); }
-
-@keyframes fadeHighlight { 0%{background:#ff94df;} 100%{background:transparent;} }
-.animate-highlight { animation: fadeHighlight 0.2s ease-in-out; }
-
-/* layout */
-.table-wrapper     { min-height: 530px; display:flex; flex-direction:column; }
-.pagination-footer { min-height: 58px; }
+.table-squish td {
+  font-size: 0.85rem;
+}
+.w-desc {
+  max-width: 240px;
+  word-break: break-word;
+}
+.w-110 {
+  max-width: 110px;
+}
+.w-100 {
+  max-width: 100px;
+}
+.btn-icon {
+  padding: 0.23rem 0.35rem;
+  line-height: 1;
+}
+.btn-icon-edit {
+  font-size: 1rem;
+  padding: 0.4rem 0.35rem;
+}
+.clickable-row {
+  cursor: pointer;
+}
+.active-filter {
+  border: 2px solid #cce5ff;
+  background-color: #e7f1ff;
+  box-shadow: 0 0 0 0.1rem #f0f8ff;
+  height: 100%;
+  min-height: 130px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.filter-card {
+  height: 100%;
+  min-height: 100px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  cursor: pointer;
+  transition: 0.3s;
+}
+.filter-card:hover {
+  background: #f8f9fa;
+  transform: scale(1.05);
+}
+@keyframes fadeHighlight {
+  0% {
+    background: #ff94df;
+  }
+  100% {
+    background: transparent;
+  }
+}
+.animate-highlight {
+  animation: fadeHighlight 0.2s ease-in-out;
+}
+.table-wrapper {
+  min-height: 530px;
+  display: flex;
+  flex-direction: column;
+}
 </style>
