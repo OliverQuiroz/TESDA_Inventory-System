@@ -1,5 +1,5 @@
 from django.urls import path, include
-from .views import items_view, item_detail_view
+from .views import items_view, item_detail_view, protect_pdf  # ✅ include protect_pdf
 from rest_framework.routers import DefaultRouter
 from .views import ItemViewSet
 
@@ -14,4 +14,6 @@ urlpatterns = [
 
     # GET/PUT/DELETE a single item by primary key
     path('items/<int:pk>/', item_detail_view, name='item_detail_view'),
+
+    path('protect-pdf/', protect_pdf, name='protect_pdf'),  # ✅ ADD THIS
 ]

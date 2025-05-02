@@ -114,6 +114,26 @@
     <ItemDetails :selectedItem="selectedItem" @edit-requested="openEditModal" />
     <EditItem :selectedItem="selectedItem" @item-updated="fetchItems" />
   </div>
+
+  <!-- 🔐 PASSWORD MODAL -->
+<div class="modal fade" id="passwordModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content p-3">
+      <div class="modal-header border-0">
+        <h5 class="modal-title">Enter Password for PDF</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <input type="password" v-model="pdfPassword" class="form-control" placeholder="Enter password" />
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button class="btn btn-primary" @click="confirmPasswordAndUpload">Download</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 </template>
 
 <script>
@@ -136,6 +156,7 @@ export default {
       searchQuery: "",
       selectedFilter: "all",
       selectedMonth: "",
+      pdfPassword: "",
       selectedItem: {},
       monthOptions: Array.from({ length: 12 }, (_, i) => ({
         value: String(i + 1).padStart(2, "0"),
@@ -144,57 +165,49 @@ export default {
     };
   },
   computed: {
-  filteredItems() {
-    let list = this.selectedFilter === "all" ? this.items : this.items.filter((i) => i.uacs_category === this.selectedFilter);
-    if (this.selectedMonth) {
-      list = list.filter((i) => {
-        const month = String(new Date(i.date_of_acquisition).getMonth() + 1).padStart(2, "0");
-        return month === this.selectedMonth;
-      });
-    }
-    const q = this.searchQuery.toLowerCase();
-    return list.filter((i) =>
-      [i.article, i.property_number, i.accountable_person, i.location, i.uacs_category]
-        .join(" ")
-        .toLowerCase()
-        .includes(q)
-    ).sort((a, b) => b.id - a.id);
+    filteredItems() {
+      let list = this.selectedFilter === "all" ? this.items : this.items.filter((i) => i.uacs_category === this.selectedFilter);
+      if (this.selectedMonth) {
+        list = list.filter((i) => {
+          const month = String(new Date(i.date_of_acquisition).getMonth() + 1).padStart(2, "0");
+          return month === this.selectedMonth;
+        });
+      }
+      const q = this.searchQuery.toLowerCase();
+      return list.filter((i) =>
+        [i.article, i.property_number, i.accountable_person, i.location, i.uacs_category]
+          .join(" ")
+          .toLowerCase()
+          .includes(q)
+      ).sort((a, b) => b.id - a.id);
+    },
+    filteredByDateOnly() {
+      let list = [...this.items];
+      if (this.selectedMonth) {
+        list = list.filter((i) => {
+          const month = String(new Date(i.date_of_acquisition).getMonth() + 1).padStart(2, "0");
+          return month === this.selectedMonth;
+        });
+      }
+      return list;
+    },
+    totalCount() {
+      return this.filteredByDateOnly.length;
+    },
+    seCount() {
+      return this.filteredByDateOnly.filter((i) => i.uacs_category === "SE").length;
+    },
+    ppeCount() {
+      return this.filteredByDateOnly.filter((i) => i.uacs_category === "PPE").length;
+    },
+    totalPages() {
+      return Math.ceil(this.filteredItems.length / this.itemsPerPage);
+    },
+    paginatedItems() {
+      const start = (this.currentPage - 1) * this.itemsPerPage;
+      return this.filteredItems.slice(start, start + this.itemsPerPage);
+    },
   },
-
-  // ✅ Add this new computed property
-  filteredByDateOnly() {
-    let list = [...this.items];
-    if (this.selectedMonth) {
-      list = list.filter((i) => {
-        const month = String(new Date(i.date_of_acquisition).getMonth() + 1).padStart(2, "0");
-        return month === this.selectedMonth;
-      });
-    }
-    return list;
-  },
-
-  // ✅ Modify this to use filteredByDateOnly
-  totalCount() {
-    return this.filteredByDateOnly.length;
-  },
-
-  seCount() {
-  return this.filteredByDateOnly.filter((i) => i.uacs_category === "SE").length;
-},
-ppeCount() {
-  return this.filteredByDateOnly.filter((i) => i.uacs_category === "PPE").length;
-},
-
-
-  totalPages() {
-    return Math.ceil(this.filteredItems.length / this.itemsPerPage);
-  },
-
-  paginatedItems() {
-    const start = (this.currentPage - 1) * this.itemsPerPage;
-    return this.filteredItems.slice(start, start + this.itemsPerPage);
-  }
-},
   methods: {
     truncateText(txt, len) {
       return !txt ? "" : txt.length > len ? txt.slice(0, len) + "…" : txt;
@@ -236,127 +249,111 @@ ppeCount() {
       if (!raw) return "";
       return new Date(raw).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
     },
-    truncateText(txt, len) {
-      return !txt ? "" : txt.length > len ? txt.slice(0, len) + "…" : txt;
-    },
     formatPlainPrice(value) {
-      const numeric = String(value).replace(/[^\d.-]/g, '');
+      const numeric = String(value).replace(/[^\d.-]/g, "");
       return parseFloat(numeric || 0).toFixed(2);
     },
     downloadPDF() {
-  const doc = new jsPDF({ orientation: "landscape" });
+      const doc = new jsPDF({ orientation: "landscape" });
+      const categoryMap = {
+        all: "All Categories",
+        SE: "Semi-Expendable",
+        PPE: "Property-Plant & Equipment",
+      };
+      const categoryLabel = categoryMap[this.selectedFilter] || "Unknown Category";
+      const sampleDate = this.filteredItems[0]?.date_of_acquisition;
+      const year = sampleDate ? new Date(sampleDate).getFullYear() : "";
 
-  // ─── 1. Dynamic Title ───
-  const categoryMap = {
-    all: "All Categories",
-    SE: "Semi-Expendable",
-    PPE: "Property-Plant & Equipment",
-  };
-  const categoryLabel = categoryMap[this.selectedFilter] || "Unknown Category";
+      let titleText = this.selectedMonth
+        ? `${categoryLabel.toUpperCase()} FOR THE MONTH OF ${new Date(0, parseInt(this.selectedMonth) - 1).toLocaleString("default", { month: "long" }).toUpperCase()} ${year}`
+        : `${categoryLabel.toUpperCase()} FOR THE YEAR ${year}`;
 
-  // Get first item's year from filtered results
-  const sampleDate = this.filteredItems[0]?.date_of_acquisition;
-  const year = sampleDate ? new Date(sampleDate).getFullYear() : "";
+      const generatedDate = new Date().toLocaleDateString("en-GB", {
+        day: "2-digit",
+        month: "long",
+        year: "numeric",
+      });
 
-  let titleText = "";
-  if (this.selectedMonth) {
-    const monthName = new Date(0, parseInt(this.selectedMonth) - 1).toLocaleString("default", { month: "long" });
-    titleText = `${categoryLabel.toUpperCase()} FOR THE MONTH OF ${monthName.toUpperCase()} ${year}`;
-  } else {
-    titleText = `${categoryLabel.toUpperCase()} FOR THE YEAR ${year}`;
-  }
+      doc.setFontSize(14);
+      const pageWidth = doc.internal.pageSize.getWidth();
+      doc.text(titleText, (pageWidth - doc.getTextWidth(titleText)) / 2, 15);
 
-  const generatedDate = new Date().toLocaleDateString("en-GB", {
-    day: "2-digit",
-    month: "long",
-    year: "numeric"
-  });
+      doc.setFontSize(10);
+      const subtitle = `Generated on ${generatedDate}`;
+      doc.text(subtitle, (pageWidth - doc.getTextWidth(subtitle)) / 2, 22);
 
-  // ─── 2. Add Title Centered ───
-  doc.setFontSize(14);
-  const pageWidth = doc.internal.pageSize.getWidth();
-  const titleWidth = doc.getTextWidth(titleText);
-  doc.text(titleText, (pageWidth - titleWidth) / 2, 15);
+      const headers = [
+        "Date Acq", "Person", "Fund", "Article", "Description", "UACS Code",
+        "Category", "Unit Cost", "Qty", "Total Cost", "Unit", "Location",
+        "Property No.", "ICS No.", "PO Date", "PO #", "Supplier"
+      ];
+      const rows = this.filteredItems.map(item => [
+        this.formatDate(item.date_of_acquisition),
+        item.accountable_person,
+        item.fund,
+        item.article,
+        item.description,
+        item.uacs_code,
+        item.uacs_category,
+        this.formatPlainPrice(item.unit_cost),
+        item.quantity,
+        this.formatPlainPrice(item.total_cost),
+        item.unit,
+        item.location,
+        item.property_number,
+        item.ics_number,
+        this.formatDate(item.date_of_po),
+        item.po_number,
+        item.supplier_name
+      ]);
 
-  // ─── 3. Subtitle (Generated Date) ───
-  doc.setFontSize(10);
-  const subtitle = `Generated on ${generatedDate}`;
-  const subWidth = doc.getTextWidth(subtitle);
-  doc.text(subtitle, (pageWidth - subWidth) / 2, 22);
+      autoTable(doc, {
+        head: [headers],
+        body: rows,
+        startY: 28,
+        margin: { top: 30, bottom: 20, left: 6 },
+        styles: { fontSize: 7, cellPadding: 1, overflow: 'linebreak' },
+        headStyles: { fillColor: [52, 58, 64], textColor: 255, halign: 'center' },
+        columnStyles: {
+          0: { cellWidth: 10 }, 1: { cellWidth: 20 }, 2: { cellWidth: 20 },
+          3: { cellWidth: 20 }, 4: { cellWidth: 20 }, 5: { cellWidth: 20 },
+          6: { cellWidth: 13 }, 7: { cellWidth: 20 }, 8: { cellWidth: 10 },
+          9: { cellWidth: 20 }, 10: { cellWidth: 10 }, 11: { cellWidth: 13 },
+          12: { cellWidth: 20 }, 13: { cellWidth: 20 }, 14: { cellWidth: 10 },
+          15: { cellWidth: 20 }, 16: { cellWidth: 20 }
+        },
+        theme: 'grid'
+      });
 
-  // ─── 4. Table Content ───
-  const headers = [
-    "Date Acq", "Person", "Fund", "Article", "Description", "UACS Code",
-    "Category", "Unit Cost", "Qty", "Total Cost", "Unit", "Location",
-    "Property No.", "ICS No.", "PO Date", "PO #", "Supplier"
-  ];
-  const rows = this.filteredItems.map(item => [
-  this.formatDate(item.date_of_acquisition),
-  item.accountable_person, // ✅ FULL VALUE here
-  item.fund,
-  item.article,
-  item.description,
-  item.uacs_code,
-  item.uacs_category,
-  this.formatPlainPrice(item.unit_cost),
-  item.quantity,
-  this.formatPlainPrice(item.total_cost),
-  item.unit,
-  item.location,
-  item.property_number,
-  item.ics_number,
-  this.formatDate(item.date_of_po),
-  item.po_number,
-  item.supplier_name
-]);
+      const password = prompt("Enter password to protect the PDF:");
+      if (!password) return;
 
-autoTable(doc, {
-  head: [headers],
-  body: rows,
-  startY: 28,
-  margin: { top: 30, bottom: 20, left: 6}, 
-  styles: {
-    fontSize: 7,
-    cellPadding: 1,
-    overflow: 'linebreak'  // allows multi-line cell wrapping
-  },
-  headStyles: {
-    fillColor: [52, 58, 64],
-    textColor: 255,
-    halign: 'center'
-  },
-  columnStyles: {
-    0: { cellWidth: 10 },   // Date Acq
-    1: { cellWidth: 20 },   // Person
-    2: { cellWidth: 20 },   // Fund
-    3: { cellWidth: 20 },   // Article
-    4: { cellWidth: 20 },   // Description
-    5: { cellWidth: 20 },   // UACS Code
-    6: { cellWidth: 13 },   // Category
-    7: { cellWidth: 20 },   // Unit Cost
-    8: { cellWidth: 10 },   // Qty
-    9: { cellWidth: 20 },   // Total Cost
-    10: { cellWidth: 10 },  // Unit
-    11: { cellWidth: 13 },  // Location
-    12: { cellWidth: 20 },  // Property No.
-    13: { cellWidth: 20 },  // ICS No.
-    14: { cellWidth: 10 },  // PO Date
-    15: { cellWidth: 20 },  // PO #
-    16: { cellWidth: 20 }   // Supplier
-  },
-  theme: 'grid'
-});
+      const pdfBlob = doc.output("blob");
+      const formData = new FormData();
+      formData.append("pdf", pdfBlob, "Registered_Items.pdf");
+      formData.append("password", password);
 
-
-
-  doc.save("Registered_Items.pdf");
-},
+      fetch("http://localhost:8000/api/protect-pdf/", {
+        method: "POST",
+        body: formData,
+      })
+        .then((res) => res.blob())
+        .then((protectedBlob) => {
+          const url = URL.createObjectURL(protectedBlob);
+          const link = document.createElement("a");
+          link.href = url;
+          link.download = "Protected_Registered_Items.pdf";
+          link.click();
+        })
+        .catch(() => alert("Failed to generate protected PDF."));
+    },
   },
   mounted() {
     this.fetchItems();
   },
 };
 </script>
+
 
 <style scoped>
 .table-squish th,
@@ -373,8 +370,6 @@ autoTable(doc, {
   color: white;
   box-shadow: 0 0 0 0.15rem rgba(0, 123, 255, 0.5);
 }
-
-
 .filter-card:hover { transform: scale(1.05); transition: 0.3s; }
 .animate-highlight { animation: fadeHighlight 0.2s ease-in-out; }
 @keyframes fadeHighlight { 0% { background: #ff94df; } 100% { background: transparent; } }

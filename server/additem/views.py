@@ -50,3 +50,33 @@ def item_detail_view(request, pk):
     if request.method == 'DELETE':
         item.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+from rest_framework.parsers import MultiPartParser
+from django.http import FileResponse
+from PyPDF2 import PdfReader, PdfWriter
+import io
+
+@api_view(['POST'])
+def protect_pdf(request):
+    pdf_file = request.FILES.get('pdf')
+    password = request.POST.get('password')
+
+    if not pdf_file or not password:
+        return Response({'error': 'Missing PDF or password.'}, status=status.HTTP_400_BAD_REQUEST)
+
+    try:
+        reader = PdfReader(pdf_file)
+        writer = PdfWriter()
+
+        for page in reader.pages:
+            writer.add_page(page)
+
+        writer.encrypt(password)
+
+        buffer = io.BytesIO()
+        writer.write(buffer)
+        buffer.seek(0)
+
+        return FileResponse(buffer, as_attachment=True, filename="Protected_Registered_Items.pdf")
+    except Exception as e:
+        return Response({'error': f'Failed to protect PDF: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
