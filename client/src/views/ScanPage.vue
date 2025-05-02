@@ -12,9 +12,12 @@
         </button>
       </div>
 
-      <div class="ratio ratio-4x3 border rounded bg-dark overflow-hidden">
-        <video ref="videoRef" class="w-100 h-100" playsinline muted></video>
-      </div>
+      <div class="d-flex justify-content-center">
+  <div class="ratio ratio-4x3 border rounded bg-dark overflow-hidden" style="width: 600px;">
+    <video ref="videoRef" class="w-100 h-100" playsinline muted></video>
+  </div>
+</div>
+
 
       <p v-if="scanError" class="alert alert-danger mt-3 text-center small mb-0">
         {{ scanError }}
