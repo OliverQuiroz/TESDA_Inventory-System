@@ -163,9 +163,6 @@
       </div>
 
       <div class="d-flex justify-content-center gap-2 mt-2">
-        <button class="btn btn-outline-primary btn-sm px-4" @click="downloadQR">
-          Download QR
-        </button>
         <button class="btn btn-primary btn-sm px-4" data-bs-dismiss="modal">
           OK
         </button>
