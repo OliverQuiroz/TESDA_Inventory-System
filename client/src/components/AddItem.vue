@@ -147,20 +147,33 @@
     </div>
 
     <!-- SUCCESS MODAL -->
-    <div class="modal fade" id="addItemSuccessModal" tabindex="-1">
-      <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content text-center p-4">
-          <h5 class="mb-3">Item successfully added!</h5>
-          <button
-            type="button"
-            class="btn btn-primary w-100"
-            data-bs-dismiss="modal"
-          >
-            OK
-          </button>
-        </div>
+<div class="modal fade" id="addItemSuccessModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content text-center p-4 rounded-4 shadow-sm">
+      <div class="mb-3">
+        <i class="bi bi-check-circle-fill text-success fs-1"></i>
+      </div>
+      <h5 class="fw-bold mb-1">Item Successfully Added!</h5>
+      <p class="text-muted small mb-3">Your item has been saved to the inventory.</p>
+
+      <div v-if="qrImage" class="mb-3">
+        <img :src="qrImage" alt="QR Code" class="img-fluid border p-1" style="max-width: 180px;" />
+        <p class="mb-1 mt-2 fw-semibold">{{ article }}</p>
+        <p class="text-muted small">{{ propertyNumber }}</p>
+      </div>
+
+      <div class="d-flex justify-content-center gap-2 mt-2">
+        <button class="btn btn-outline-primary btn-sm px-4" @click="downloadQR">
+          Download QR
+        </button>
+        <button class="btn btn-primary btn-sm px-4" data-bs-dismiss="modal">
+          OK
+        </button>
       </div>
     </div>
+  </div>
+</div>
+
 
     <!-- hidden canvas for QR rendering -->
     <canvas ref="qrCanvas" style="display: none"></canvas>
