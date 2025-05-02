@@ -156,33 +156,70 @@ export default {
 
     /* ---- QR helpers ---- */
     async generateLabeledQR() {
-      const qrPath   = this.selectedItem?.qr_code;
-      const labelTxt = this.selectedItem?.article || "QR Code";
-      if (!qrPath) return;
+  const qrPath = this.selectedItem?.qr_code;
+  const itemLabel = this.selectedItem?.article || "QR Code";
+  const headerLabel = "TESDA JGMZSAT";
+  if (!qrPath) return;
 
-      const img = new Image();
-      img.crossOrigin = "anonymous";
-      img.onload = () => {
-        const canvas   = this.$refs.qrCanvas;
-        const ctx      = canvas.getContext("2d");
-        const padding  = 10;
-        const fSize    = 36;
-        canvas.width   = img.width;
-        canvas.height  = img.height + fSize + padding;
+  const img = new Image();
+  img.crossOrigin = "anonymous";
+  img.onload = () => {
+    const canvas = this.$refs.qrCanvas;
+    const ctx = canvas.getContext("2d");
 
-        ctx.fillStyle = "#fff";
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        ctx.drawImage(img, 0, 0);
+    // 3x4 inches portrait at 96 DPI
+    const targetWidth = 288;
+    const targetHeight = 384;
+    const padding = 10;
+    const fSize = 20;
 
-        ctx.font      = `${fSize}px Arial`;
-        ctx.fillStyle = "#000";
-        ctx.textAlign = "center";
-        ctx.fillText(labelTxt, canvas.width / 2, img.height + fSize);
+    canvas.width = targetWidth;
+    canvas.height = targetHeight;
 
-        this.qrImage  = canvas.toDataURL("image/png");
-      };
-      img.src = this.apiPath(qrPath);
-    },
+    ctx.fillStyle = "#fff";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // Header label
+    ctx.font = `${fSize}px Arial`;
+    ctx.fillStyle = "#000";
+    ctx.textAlign = "center";
+    ctx.fillText(headerLabel, canvas.width / 2, padding + fSize); // top center text
+
+    // Wrap item label (bottom text)
+    const maxLabelLength = 25;
+    const labelLines = itemLabel.length > maxLabelLength
+      ? [itemLabel.slice(0, maxLabelLength), itemLabel.slice(maxLabelLength)]
+      : [itemLabel];
+
+    // Bottom label height
+    const labelBlockHeight = labelLines.length * fSize;
+
+    // Reserve header + footer space
+    const spaceAboveQR = padding + fSize + 10;
+    const spaceBelowQR = padding + labelBlockHeight + 10;
+
+    // Make QR size as big as possible but fit remaining vertical space
+    const availableHeight = targetHeight - spaceAboveQR - spaceBelowQR;
+    const qrSize = Math.min(targetWidth * 0.8, availableHeight); // 80% width or vertical fit
+    const qrX = (targetWidth - qrSize) / 2;
+    const qrY = spaceAboveQR + ((availableHeight - qrSize) / 2); // center in vertical space
+
+    ctx.drawImage(img, qrX, qrY, qrSize, qrSize);
+
+    // Draw bottom label
+    labelLines.forEach((line, i) => {
+      const lineY = targetHeight - padding - ((labelLines.length - i - 1) * fSize);
+      ctx.fillText(line, canvas.width / 2, lineY);
+    });
+
+    this.qrImage = canvas.toDataURL("image/png");
+  };
+
+  img.src = this.apiPath(qrPath);
+},
+
+
+
 
     async downloadQR() {
       if (!this.qrImage) await this.generateLabeledQR();
