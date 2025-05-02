@@ -15,218 +15,130 @@
 
           <div class="modal-body">
             <form @submit.prevent="addItem">
-              <!-- ──────────── FIELDS (same layout as before) ──────────── -->
-              <div class="row g-3">
-                <!-- DATE / ACCOUNTABLE / FUND -->
-                <div class="col-md-4">
+              <div class="row gx-4 gy-3">
+                <!-- Row 1 -->
+                <div class="col-lg-4 col-md-6">
                   <div class="form-floating">
-                    <input
-                      v-model="acquisitionDate"
-                      type="date"
-                      class="form-control"
-                      required
-                    />
+                    <input v-model="acquisitionDate" type="date" class="form-control" required />
                     <label>Date of Acquisition</label>
                   </div>
                 </div>
-
-                <div class="col-md-4">
+                <div class="col-lg-4 col-md-6">
                   <div class="form-floating">
-                    <input
-                      v-model="accountablePerson"
-                      type="text"
-                      class="form-control"
-                      placeholder="Accountable Person"
-                      required
-                    />
+                    <input v-model="accountablePerson" type="text" class="form-control" placeholder="Accountable Person" required />
                     <label>Accountable Person</label>
                   </div>
                 </div>
-
-                <div class="col-md-4">
+                <div class="col-lg-4 col-md-6">
                   <div class="form-floating">
-                    <input
-                      v-model="fund"
-                      type="text"
-                      class="form-control"
-                      placeholder="Fund"
-                    />
+                    <input v-model="fund" type="text" class="form-control" placeholder="Fund" />
                     <label>Fund</label>
                   </div>
                 </div>
 
-                <!-- ARTICLE / DESCRIPTION -->
-                <div class="col-md-4">
+                <!-- Row 2 -->
+                <div class="col-lg-6">
                   <div class="form-floating">
-                    <input
-                      v-model="article"
-                      type="text"
-                      class="form-control"
-                      placeholder="Article"
-                      required
-                    />
+                    <input v-model="article" type="text" class="form-control" placeholder="Article" required />
                     <label>Article</label>
                   </div>
                 </div>
-
-                <div class="col-md-8">
+                <div class="col-lg-6">
                   <div class="form-floating">
-                    <input
-                      v-model="description"
-                      type="text"
-                      class="form-control"
-                      placeholder="Description"
-                    />
+                    <input v-model="description" type="text" class="form-control" placeholder="Description" />
                     <label>Description</label>
                   </div>
                 </div>
 
-                <!-- UACS -->
-                <div class="col-md-4">
+                <!-- Row 3 -->
+                <div class="col-lg-4">
                   <div class="form-floating">
-                    <input
-                      v-model="uacsCode"
-                      type="text"
-                      class="form-control"
-                      placeholder="UACS Code"
-                    />
+                    <input v-model="uacsCode" type="text" class="form-control" placeholder="UACS Code" />
                     <label>UACS Code</label>
                   </div>
                 </div>
-
-                <div class="col-md-4">
+                <div class="col-lg-4">
                   <div class="form-floating">
                     <select v-model="uacsCategory" class="form-select">
                       <option value="SE">Semi-Expendable</option>
-                      <option value="PPE">Property, Plant &amp; Equipment</option>
+                      <option value="PPE">Property, Plant & Equipment</option>
                     </select>
                     <label>Category for UACS Code</label>
                   </div>
                 </div>
-
-                <!-- COST / QTY / TOTAL -->
-                <div class="col-md-4">
+                <div class="col-lg-4">
                   <div class="form-floating">
-                    <input
-                      v-model.number="unitCost"
-                      type="number"
-                      step="0.01"
-                      class="form-control"
-                      placeholder="Unit Cost"
-                    />
+                    <input v-model.number="unitCost" type="number" step="0.01" class="form-control" placeholder="Unit Cost" />
                     <label>Unit Cost</label>
                   </div>
                 </div>
 
-                <div class="col-md-4">
+                <!-- Row 4 -->
+                <div class="col-lg-4">
                   <div class="form-floating">
-                    <input
-                      v-model.number="quantity"
-                      type="number"
-                      min="1"
-                      class="form-control"
-                      placeholder="Quantity"
-                    />
+                    <input v-model.number="quantity" type="number" min="1" class="form-control" placeholder="Quantity" />
                     <label>Quantity</label>
                   </div>
                 </div>
-
-                <div class="col-md-4">
+                <div class="col-lg-4">
                   <div class="form-floating">
-                    <!-- totalCost is computed but un-wrapped with .value in script -->
                     <input :value="totalCost" class="form-control" disabled />
                     <label>Total Cost</label>
                   </div>
                 </div>
-
-                <!-- UNIT / LOCATION / PROPERTY NO -->
-                <div class="col-md-4">
+                <div class="col-lg-4">
                   <div class="form-floating">
-                    <input
-                      v-model="unit"
-                      type="text"
-                      class="form-control"
-                      placeholder="Unit"
-                    />
+                    <input v-model="unit" type="text" class="form-control" placeholder="Unit" />
                     <label>Unit</label>
                   </div>
                 </div>
 
-                <div class="col-md-4">
+                <!-- Row 5 -->
+                <div class="col-lg-6">
                   <div class="form-floating">
-                    <input
-                      v-model="location"
-                      type="text"
-                      class="form-control"
-                      placeholder="Location"
-                    />
+                    <input v-model="location" type="text" class="form-control" placeholder="Location" />
                     <label>Location</label>
                   </div>
                 </div>
-
-                <div class="col-md-4">
+                <div class="col-lg-6">
                   <div class="form-floating">
-                    <input
-                      v-model="propertyNumber"
-                      type="text"
-                      class="form-control"
-                      placeholder="Property Number"
-                      required
-                    />
+                    <input v-model="propertyNumber" type="text" class="form-control" placeholder="Property Number" required />
                     <label>Property Number</label>
                   </div>
                 </div>
 
-                <!-- ICS / PO DATE / PO # -->
-                <div class="col-md-4">
+                <!-- Row 6 -->
+                <div class="col-lg-4">
                   <div class="form-floating">
-                    <input
-                      v-model="icsNumber"
-                      type="text"
-                      class="form-control"
-                      placeholder="ICS No."
-                    />
+                    <input v-model="icsNumber" type="text" class="form-control" placeholder="ICS No." />
                     <label>ICS No.</label>
                   </div>
                 </div>
-
-                <div class="col-md-4">
+                <div class="col-lg-4">
                   <div class="form-floating">
                     <input v-model="poDate" type="date" class="form-control" />
                     <label>Date of PO</label>
                   </div>
                 </div>
-
-                <div class="col-md-4">
+                <div class="col-lg-4">
                   <div class="form-floating">
-                    <input
-                      v-model="poNumber"
-                      type="text"
-                      class="form-control"
-                      placeholder="PO #"
-                    />
+                    <input v-model="poNumber" type="text" class="form-control" placeholder="PO #" />
                     <label>PO #</label>
                   </div>
                 </div>
 
-                <!-- SUPPLIER -->
+                <!-- Row 7 -->
                 <div class="col-12">
                   <div class="form-floating">
-                    <input
-                      v-model="supplierName"
-                      type="text"
-                      class="form-control"
-                      placeholder="Supplier Name"
-                    />
+                    <input v-model="supplierName" type="text" class="form-control" placeholder="Supplier Name" />
                     <label>Supplier Name</label>
                   </div>
                 </div>
               </div>
 
-              <div class="text-end mt-4">
-                <button type="submit" class="btn btn-success w-100">
-                  Add Item
-                </button>
+              <!-- Button -->
+              <div class="text-center mt-4">
+                <button type="submit" class="btn btn-success px-5">Add Item</button>
               </div>
             </form>
           </div>
@@ -263,7 +175,6 @@ export default {
   name: "AddItemModal",
   emits: ["item-added"],
   setup(_, { emit }) {
-    /* ───── reactive fields ───── */
     const acquisitionDate = ref("");
     const accountablePerson = ref("");
     const fund = ref("");
@@ -281,7 +192,6 @@ export default {
     const poNumber = ref("");
     const supplierName = ref("");
 
-    /* ───── helpers ───── */
     const totalCost = computed(
       () => (unitCost.value || 0) * (quantity.value || 0)
     );
@@ -305,21 +215,18 @@ export default {
       supplierName.value = "";
     };
 
-    /* ───── add item ───── */
     const addItem = async () => {
       if (!propertyNumber.value) {
         alert("Property number is required.");
         return;
       }
 
-      /* duplicate-check */
       const existing = await fetch("http://127.0.0.1:8000/api/items/");
       if ((await existing.json()).some((i) => i.property_number === propertyNumber.value)) {
         alert("Item with this Property Number already exists.");
         return;
       }
 
-      /* unwrap every ref before JSON.stringify */
       const payload = {
         date_of_acquisition: acquisitionDate.value || null,
         accountable_person: accountablePerson.value,
@@ -352,7 +259,6 @@ export default {
         return;
       }
 
-      /* close modal, show success, refresh list */
       Modal.getInstance(document.getElementById("addItemModal")).hide();
       new Modal(document.getElementById("addItemSuccessModal")).show();
 
@@ -360,17 +266,15 @@ export default {
       resetForm();
     };
 
-    /* reset state when success modal closes */
     onMounted(() => {
       document
         .getElementById("addItemSuccessModal")
         .addEventListener("hidden.bs.modal", () => {
-          /* additional cleanup if needed */
+          // Optional cleanup
         });
     });
 
     return {
-      /* template bindings */
       acquisitionDate,
       accountablePerson,
       fund,

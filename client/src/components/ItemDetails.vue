@@ -18,47 +18,51 @@
         </div>
 
         <div class="modal-body">
-          <!-- key/value pairs -->
-          <div
-            v-for="(value, label) in itemDetails"
-            :key="label"
-            class="row mb-2"
-          >
-            <div class="col-sm-5 fw-semibold">{{ label }}:</div>
-            <div class="col-sm-7 text-break">{{ value }}</div>
-          </div>
-
-          <!-- Accountable-person history -->
-          <div class="mb-4">
-            <label class="fw-semibold">Accountable History:</label>
-            <ul
-              v-if="uniqueAccountableHistory.length"
-              class="list-group mt-1"
-            >
-              <li
-                v-for="(entry, idx) in uniqueAccountableHistory"
-                :key="idx"
-                class="list-group-item d-flex justify-content-between align-items-center"
+          <div class="row">
+            <!-- LEFT SIDE: ITEM DETAILS -->
+            <div class="col-md-8">
+              <div
+                v-for="(value, label) in itemDetails"
+                :key="label"
+                class="row mb-2"
               >
-                {{ entry.name }}
-                <span class="badge bg-secondary">{{ entry.date }}</span>
-              </li>
-            </ul>
-            <small v-else class="text-muted">No history available</small>
-          </div>
+                <div class="col-sm-5 fw-semibold">{{ label }}:</div>
+                <div class="col-sm-7 text-break">{{ value }}</div>
+              </div>
 
-          <!-- QR code preview & download -->
-          <div class="text-center">
-            <img
-              v-if="qrImage"
-              :src="qrImage"
-              alt="QR Code"
-              class="img-fluid mb-3"
-              style="max-width: 200px;"
-            />
-            <button class="btn btn-primary" @click="downloadQR">
-              Download QR Code
-            </button>
+              <!-- Accountable-person history -->
+              <div class="mb-4">
+                <label class="fw-semibold">Accountable History:</label>
+                <ul
+                  v-if="uniqueAccountableHistory.length"
+                  class="list-group mt-1"
+                >
+                  <li
+                    v-for="(entry, idx) in uniqueAccountableHistory"
+                    :key="idx"
+                    class="list-group-item d-flex justify-content-between align-items-center"
+                  >
+                    {{ entry.name }}
+                    <span class="badge bg-secondary">{{ entry.date }}</span>
+                  </li>
+                </ul>
+                <small v-else class="text-muted">No history available</small>
+              </div>
+            </div>
+
+            <!-- RIGHT SIDE: QR CODE -->
+            <div class="col-md-4 text-center d-flex flex-column align-items-center justify-content-center">
+              <img
+                v-if="qrImage"
+                :src="qrImage"
+                alt="QR Code"
+                class="img-fluid mb-3"
+                style="max-width: 200px;"
+              />
+              <button class="btn btn-primary" @click="downloadQR">
+                Download QR Code
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -81,7 +85,6 @@ export default {
     return { qrImage: "" };
   },
 
-  /* ---------- computed ---------- */
   computed: {
     itemDetails() {
       return {
@@ -117,7 +120,6 @@ export default {
     },
   },
 
-  /* ---------- watchers ---------- */
   watch: {
     selectedItem: {
       immediate: true,
@@ -128,7 +130,6 @@ export default {
     },
   },
 
-  /* ---------- methods ---------- */
   methods: {
     emitEditRequest() { this.$emit("edit-requested"); },
 
@@ -154,7 +155,6 @@ export default {
       });
     },
 
-    /* ---- QR helpers ---- */
     async generateLabeledQR() {
   const qrPath = this.selectedItem?.qr_code;
   const itemLabel = this.selectedItem?.article || "QR Code";
@@ -236,7 +236,14 @@ export default {
 </script>
 
 <style scoped>
-.row        { margin-bottom: 0.5rem; }
-.text-break { word-break: break-word; white-space: pre-wrap; }
-.list-group-item { font-size: 14px; }
+.row {
+  margin-bottom: 0.5rem;
+}
+.text-break {
+  word-break: break-word;
+  white-space: pre-wrap;
+}
+.list-group-item {
+  font-size: 14px;
+}
 </style>

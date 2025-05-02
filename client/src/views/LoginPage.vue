@@ -93,48 +93,66 @@ export default {
 
 <style scoped>
 .login-container {
+  position: relative;
   display: flex;
+  align-items: center;
+  justify-content: center;
   height: 100vh;
   width: 100vw;
-  align-items: center;
-}
-.login-image {
-  width: 40%;
-  height: 100vh;
+  overflow: hidden;
   background: url('@/assets/loginBg.png') no-repeat center center;
   background-size: cover;
 }
-.login-form {
-  width: 60%;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  background-color: white;
-  padding: 4rem;
+
+/* Background blur overlay */
+.login-container::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 100%;
+  backdrop-filter: blur(4px);
+  background-color: rgba(255, 255, 255, 0.2);
+  z-index: 1;
 }
+
+.login-form {
+  position: relative;
+  z-index: 2;
+  background-color: rgba(255, 255, 255, 0.85);
+  border-radius: 16px;
+  padding: 3rem;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  max-width: 500px;
+  width: 90%;
+}
+
 .form-content {
   width: 100%;
-  max-width: 500px;
-  min-width: 400px;
   text-align: center;
 }
+
 .school-name {
   font-size: 24px;
   text-transform: uppercase;
   font-weight: bold;
   margin-bottom: 30px;
 }
+
 .form-group {
   width: 100%;
   margin-bottom: 20px;
   text-align: left;
 }
+
 .form-label {
   display: block;
   font-weight: bold;
   margin-bottom: 6px;
   font-size: 15px;
 }
+
 .form-control {
   width: 100%;
   padding: 14px;
@@ -143,11 +161,13 @@ export default {
   border-radius: 5px;
   transition: all 0.3s ease-in-out;
 }
+
 .form-control:focus {
   border-color: #007bff;
   outline: none;
   box-shadow: 0 0 6px rgba(0, 123, 255, 0.3);
 }
+
 .btn-dark {
   padding: 14px;
   font-size: 17px;
@@ -156,37 +176,43 @@ export default {
   background-color: #343a40;
   transition: 0.3s;
 }
+
 .btn-dark:hover {
   background-color: #23272b;
 }
+
 .forgot-password {
   text-decoration: none;
   color: #007bff;
   font-size: 14px;
 }
+
 .forgot-password:hover {
   text-decoration: underline;
 }
+
 @media (max-width: 992px) {
   .login-container {
     flex-direction: column;
+    background-position: center;
   }
-  .login-image {
-    width: 100%;
-    height: 35vh;
-  }
+
   .login-form {
-    width: 100%;
-    padding: 3rem;
+    padding: 2.5rem;
+    border-radius: 0;
+    max-width: 100%;
   }
+
   .form-content {
     max-width: 400px;
   }
 }
+
 @media (max-width: 768px) {
   .login-form {
     padding: 2rem;
   }
+
   .form-content {
     max-width: 350px;
   }
