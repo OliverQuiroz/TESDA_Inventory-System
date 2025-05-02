@@ -1,67 +1,62 @@
 <template>
-  <div class="container mt-5" style="max-width: 600px;">
-    <h3 class="text-center">QR SCAN</h3>
+  <div class="container mt-5" style="max-width: 800px;">
+    <h3 class="text-center fw-bold mb-4">QR SCAN - Property Number</h3>
 
-    <!-- If we haven't scanned an item yet, show scanning UI -->
     <div v-if="!scannedItem">
-      <div class="d-flex justify-content-center mb-3">
-        <!-- Start/Stop scanning buttons -->
-        <button class="btn btn-primary" @click="startScan" v-if="!isScanning">
-          Start Scanning
+      <div class="d-flex justify-content-center mb-3 gap-2">
+        <button class="btn btn-primary btn-sm" @click="startScan" v-if="!isScanning">
+          <i class="bi bi-camera"></i> Start Scanning
         </button>
-        <button class="btn btn-secondary" @click="stopScan" v-else>
-          Stop Scanning
+        <button class="btn btn-secondary btn-sm" @click="stopScan" v-else>
+          <i class="bi bi-stop-circle"></i> Stop Scanning
         </button>
       </div>
 
-      <!-- Video preview -->
-      <div class="ratio ratio-4x3 border bg-dark" style="max-width: 100%;">
-        <video
-          ref="videoRef"
-          style="width: 100%; height: auto;"
-          playsinline
-          muted
-        ></video>
+      <div class="ratio ratio-4x3 border rounded bg-dark overflow-hidden">
+        <video ref="videoRef" class="w-100 h-100" playsinline muted></video>
       </div>
 
-      <!-- Any errors -->
-      <p v-if="scanError" class="alert alert-danger mt-2 text-center">
+      <p v-if="scanError" class="alert alert-danger mt-3 text-center small mb-0">
         {{ scanError }}
       </p>
     </div>
 
-    <!-- Once we've scanned/fetched the item, show its details -->
-    <div v-else class="card p-3 mt-3 scanned-item-container">
-      <h5 class="text-center">Scanned Item Details</h5>
-      <p><strong>Inventory Number:</strong> {{ scannedItem.inventory_number }}</p>
-      <p><strong>Product Name:</strong> {{ scannedItem.product_name }}</p>
-      <p><strong>Description:</strong> {{ scannedItem.description }}</p>
-      <p><strong>Price:</strong> ₱ {{ formatPrice(scannedItem.price) }}</p>
-      <p><strong>Date of Purchase:</strong> {{ scannedItem.date_of_purchase }}</p>
-      <p><strong>Recipient:</strong> {{ scannedItem.recipient }}</p>
-      <p><strong>Classification:</strong> {{ scannedItem.classification }}</p>
+    <div v-else class="card mt-4 shadow-sm">
+      <div class="card-header text-center fw-bold">Scanned Item Details</div>
+      <div class="card-body small">
+        <div class="row mb-2"><div class="col-6 fw-semibold">Date of Acquisition:</div><div class="col-6">{{ formatDate(scannedItem.date_of_acquisition) }}</div></div>
+        <div class="row mb-2"><div class="col-6 fw-semibold">Accountable Person:</div><div class="col-6">{{ scannedItem.accountable_person }}</div></div>
+        <div class="row mb-2"><div class="col-6 fw-semibold">Fund:</div><div class="col-6">{{ scannedItem.fund }}</div></div>
+        <div class="row mb-2"><div class="col-6 fw-semibold">Article:</div><div class="col-6">{{ scannedItem.article }}</div></div>
+        <div class="row mb-2"><div class="col-6 fw-semibold">Description:</div><div class="col-6">{{ scannedItem.description }}</div></div>
+        <div class="row mb-2"><div class="col-6 fw-semibold">UACS Code:</div><div class="col-6">{{ scannedItem.uacs_code }}</div></div>
+        <div class="row mb-2"><div class="col-6 fw-semibold">Category (UACS):</div><div class="col-6">{{ scannedItem.uacs_category }}</div></div>
+        <div class="row mb-2"><div class="col-6 fw-semibold">Unit Cost:</div><div class="col-6">₱ {{ formatPrice(scannedItem.unit_cost) }}</div></div>
+        <div class="row mb-2"><div class="col-6 fw-semibold">Quantity:</div><div class="col-6">{{ scannedItem.quantity }}</div></div>
+        <div class="row mb-2"><div class="col-6 fw-semibold">Total Cost:</div><div class="col-6">₱ {{ formatPrice(scannedItem.total_cost) }}</div></div>
+        <div class="row mb-2"><div class="col-6 fw-semibold">Unit:</div><div class="col-6">{{ scannedItem.unit }}</div></div>
+        <div class="row mb-2"><div class="col-6 fw-semibold">Location:</div><div class="col-6">{{ scannedItem.location }}</div></div>
+        <div class="row mb-2"><div class="col-6 fw-semibold">Property Number:</div><div class="col-6">{{ scannedItem.property_number }}</div></div>
+        <div class="row mb-2"><div class="col-6 fw-semibold">ICS Number:</div><div class="col-6">{{ scannedItem.ics_number }}</div></div>
+        <div class="row mb-2"><div class="col-6 fw-semibold">Date of PO:</div><div class="col-6">{{ formatDate(scannedItem.date_of_po) }}</div></div>
+        <div class="row mb-2"><div class="col-6 fw-semibold">PO Number:</div><div class="col-6">{{ scannedItem.po_number }}</div></div>
+        <div class="row mb-3"><div class="col-6 fw-semibold">Supplier:</div><div class="col-6">{{ scannedItem.supplier_name }}</div></div>
 
-      <div v-if="scannedItem.qr_code" class="mt-2 text-center">
-        <img
-          :src="getFullImageUrl(scannedItem.qr_code)"
-          alt="QR Code"
-          width="100"
-          height="100"
-          class="border rounded"
-        />
-      </div>
+        <div v-if="scannedItem.qr_code" class="text-center mb-3">
+          <img :src="getFullImageUrl(scannedItem.qr_code)" alt="QR Code" width="100" height="100" class="border rounded" />
+        </div>
 
-      <div class="mt-3 d-flex justify-content-center">
-        <button class="btn btn-info me-2" @click="openEditModal(scannedItem)">
-          Edit Item
-        </button>
-        <button class="btn btn-secondary" @click="resetScan">
-          Scan Again
-        </button>
+        <div class="d-flex justify-content-center gap-2">
+          <button class="btn btn-outline-info btn-sm" @click="openEditModal(scannedItem)">
+            <i class="bi bi-pencil-square"></i> Edit Item
+          </button>
+          <button class="btn btn-secondary btn-sm" @click="resetScan">
+            <i class="bi bi-arrow-repeat"></i> Scan Again
+          </button>
+        </div>
       </div>
     </div>
 
-    <!-- Example EditItem modal (if you have it) -->
     <EditItem :selectedItem="selectedItem" @item-updated="fetchUpdatedItem" />
   </div>
 </template>
@@ -84,183 +79,110 @@ export default {
     const scanError = ref("");
     const selectedItem = ref(null);
 
-    // On mount, create the codeReader instance
     onMounted(() => {
       codeReader = new BrowserMultiFormatReader();
     });
 
-    /**
-     * Extract the inventory number from lines like:
-     *   "Inventory No: INV - 10"
-     * or
-     *   "Inventory Number: ABC123"
-     *
-     * We'll capture everything after "Inventory No/Number: "
-     * up to the next newline. That way letters/dashes/spaces are allowed.
-     */
-    const extractInventoryNumber = (decodedText) => {
-      console.log("Raw QR Code Data:", decodedText);
+    const extractPropertyNumber = (decodedText) => {
+  console.log("Raw QR Code Data:", decodedText);
 
-      // Regex explanation:
-      //  - Look for "Inventory" then optional spaces + "No" or "Number"
-      //  - Then ":", plus optional spaces
-      //  - Capture everything until the next newline
-      // We'll remove any trailing spaces/newlines
-      const match = decodedText.match(/Inventory\s*(?:Number|No)\s*:\s*([^\r\n]+)/i);
-      if (match && match[1]) {
-        const invNumber = match[1].split("\n")[0].trim();
-        console.log("Extracted Inventory Number:", invNumber);
-        return invNumber;
-      }
+  const match = decodedText.match(/(?:Inventory|Property)\s*(?:Number|No)\.?\s*[:：]?\s*([^\r\n]+)/i);
 
-      scanError.value =
-        "Invalid QR code format. Please ensure the code has 'Inventory No: <text>'.";
-      return null;
-    };
+  if (match && match[1]) {
+    const propNo = match[1].split("\n")[0].trim();
+    console.log("Extracted Property Number:", propNo);
+    return propNo;
+  }
 
-    // Start scanning (try environment camera, fallback to user)
+  scanError.value = "Invalid QR code format. Please ensure the code has 'Property No: <text>'.";
+  return null;
+};
+
+
     const startScan = async () => {
       scanError.value = "";
       scannedItem.value = null;
       isScanning.value = true;
 
       try {
-        if (!codeReader) {
-          codeReader = new BrowserMultiFormatReader();
-        }
-
-        // Attempt rear camera first
-        await codeReader.decodeFromVideoDevice(
-          // { facingMode: "environment" },
-          null,
-          videoRef.value,
-          onFrameDecoded
-        );
-      } catch (envError) {
-        console.warn("Environment camera failed, fallback to user:", envError);
-        try {
-          // Fallback to front camera
-          await codeReader.decodeFromVideoDevice(
-            // { facingMode: "user" },
-            null,
-            videoRef.value,
-            onFrameDecoded
-          );
-        } catch (userError) {
-          console.error("Camera error:", userError);
-          scanError.value =
-            "Failed to start camera. Check permissions or device camera availability.";
-          isScanning.value = false;
-        }
+        if (!codeReader) codeReader = new BrowserMultiFormatReader();
+        await codeReader.decodeFromVideoDevice(null, videoRef.value, onFrameDecoded);
+      } catch (error) {
+        scanError.value = "Failed to access camera.";
+        isScanning.value = false;
       }
     };
 
-    // Called for each frame
     const onFrameDecoded = (result, error, controls) => {
       if (result) {
-        console.log("Decoded text:", result.getText());
-
-        const invNumber = extractInventoryNumber(result.getText());
-        if (!invNumber) {
-          console.error("Invalid QR code detected (no inventory number).");
-          return;
-        }
-
-        // If we got a valid inventory number, fetch item by it
-        fetchItemByInventoryNumber(invNumber);
-
-        // Stop scanning after success
+        const propNo = extractPropertyNumber(result.getText());
+        if (!propNo) return;
+        fetchItemByPropertyNumber(propNo);
         controls.stop();
         isScanning.value = false;
         stopScan();
       }
-      // 'error' is normal if no code in that frame
     };
 
-    // Actually fetch item by inventory_number => /api/items/?inventory_number=INV-10
-    const fetchItemByInventoryNumber = async (invNumber) => {
+    const fetchItemByPropertyNumber = async (propNo) => {
       try {
-        // Use encodeURIComponent in case of spaces/dashes
-        const encoded = encodeURIComponent(invNumber);
-        const res = await fetch(`http://127.0.0.1:8000/api/items/?inventory_number=${encoded}`);
-        if (!res.ok) {
-          throw new Error(`No item found for Inventory Number: ${invNumber}`);
-        }
+        const res = await fetch(`http://127.0.0.1:8000/api/items/?property_number=${encodeURIComponent(propNo)}`);
         const data = await res.json();
-        if (!Array.isArray(data) || data.length === 0) {
-          throw new Error("No items match that inventory_number.");
-        }
-
-        console.log("Fetched item data:", data[0]);
+        if (!Array.isArray(data) || data.length === 0) throw new Error();
         scannedItem.value = data[0];
-      } catch (err) {
-        console.error("Fetch error:", err);
-        scanError.value = "Could not find an item for this inventory number.";
+      } catch {
+        scanError.value = "Could not find an item for this property number.";
       }
     };
 
-    // Stop scanning
     const stopScan = () => {
       if (codeReader) {
         try {
           codeReader.reset();
-        } catch (error) {
-          console.warn("codeReader reset error:", error);
+        } catch (err) {
+          console.warn("codeReader reset error:", err);
         }
       }
-      const videoElement = videoRef.value;
-      if (videoElement && videoElement.srcObject) {
-        const stream = videoElement.srcObject;
-        stream.getTracks().forEach((track) => track.stop());
-        videoElement.srcObject = null;
+      if (videoRef.value?.srcObject) {
+        videoRef.value.srcObject.getTracks().forEach((track) => track.stop());
+        videoRef.value.srcObject = null;
       }
       isScanning.value = false;
     };
 
-    // Clear data so we can scan again
     const resetScan = () => {
       scannedItem.value = null;
       scanError.value = "";
       isScanning.value = false;
     };
 
-    // Open the edit modal if needed
     const openEditModal = (item) => {
       selectedItem.value = item;
       setTimeout(() => {
-        const editModalEl = document.getElementById("editItemModal");
-        if (!editModalEl) {
-          console.error("Error: EditItem modal element not found!");
-          return;
-        }
-        const editModal = new Modal(editModalEl, { backdrop: "static" });
-        editModal.show();
+        const modalEl = document.getElementById("editItemModal");
+        if (!modalEl) return;
+        new Modal(modalEl, { backdrop: "static" }).show();
       }, 100);
     };
 
-    // After editing, re-fetch if needed
     const fetchUpdatedItem = () => {
-      if (scannedItem.value?.inventory_number) {
-        fetchItemByInventoryNumber(scannedItem.value.inventory_number);
+      if (scannedItem.value?.property_number) {
+        fetchItemByPropertyNumber(scannedItem.value.property_number);
       }
     };
 
-    // Format currency
-    const formatPrice = (value) => {
-      return new Intl.NumberFormat("en-US", {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-      }).format(value || 0);
+    const formatPrice = (val) => {
+      return new Intl.NumberFormat("en-PH", { minimumFractionDigits: 2 }).format(parseFloat(val || 0));
     };
 
-    // Build absolute URL for QR code image
-    const getFullImageUrl = (path) => {
-      return `http://127.0.0.1:8000${path}`;
+    const formatDate = (raw) => {
+      if (!raw) return "";
+      return new Date(raw).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
     };
 
-    onBeforeUnmount(() => {
-      stopScan();
-    });
+    const getFullImageUrl = (path) => `http://127.0.0.1:8000${path}`;
+
+    onBeforeUnmount(() => stopScan());
 
     return {
       videoRef,
@@ -268,37 +190,24 @@ export default {
       scannedItem,
       scanError,
       selectedItem,
-
       startScan,
       stopScan,
       resetScan,
       openEditModal,
       fetchUpdatedItem,
-
       formatPrice,
-      getFullImageUrl
+      formatDate,
+      getFullImageUrl,
     };
   },
 };
 </script>
 
 <style scoped>
-h3 {
-  text-align: center;
-}
 .container {
   min-height: 70vh;
 }
-.scanned-item-container {
-  max-width: 500px;
-  margin: 0 auto;
-  text-align: center;
-}
-.scanned-item-container p {
-  margin-bottom: 5px;
-}
-.scanned-item-container img {
-  display: block;
-  margin: 0 auto;
+.card-header {
+  background-color: #f8f9fa;
 }
 </style>
