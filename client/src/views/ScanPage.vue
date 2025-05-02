@@ -1,5 +1,5 @@
 <template>
-  <div class="container mt-5" style="max-width: 800px;">
+  <div class="container mt-5" style="max-width: 1000px;">
     <h3 class="text-center fw-bold mb-4">QR SCAN - Property Number</h3>
 
     <div v-if="!scannedItem">
@@ -13,49 +13,57 @@
       </div>
 
       <div class="d-flex justify-content-center">
-  <div class="ratio ratio-4x3 border rounded bg-dark overflow-hidden" style="width: 600px;">
-    <video ref="videoRef" class="w-100 h-100" playsinline muted></video>
-  </div>
-</div>
-
+        <div class="ratio ratio-4x3 border rounded bg-dark overflow-hidden" style="width: 600px;">
+          <video ref="videoRef" class="w-100 h-100" playsinline muted></video>
+        </div>
+      </div>
 
       <p v-if="scanError" class="alert alert-danger mt-3 text-center small mb-0">
         {{ scanError }}
       </p>
     </div>
 
-    <div v-else class="card mt-4 shadow-sm">
-      <div class="card-header text-center fw-bold">Scanned Item Details</div>
-      <div class="card-body small">
-        <div class="row mb-2"><div class="col-6 fw-semibold">Date of Acquisition:</div><div class="col-6">{{ formatDate(scannedItem.date_of_acquisition) }}</div></div>
-        <div class="row mb-2"><div class="col-6 fw-semibold">Accountable Person:</div><div class="col-6">{{ scannedItem.accountable_person }}</div></div>
-        <div class="row mb-2"><div class="col-6 fw-semibold">Fund:</div><div class="col-6">{{ scannedItem.fund }}</div></div>
-        <div class="row mb-2"><div class="col-6 fw-semibold">Article:</div><div class="col-6">{{ scannedItem.article }}</div></div>
-        <div class="row mb-2"><div class="col-6 fw-semibold">Description:</div><div class="col-6">{{ scannedItem.description }}</div></div>
-        <div class="row mb-2"><div class="col-6 fw-semibold">UACS Code:</div><div class="col-6">{{ scannedItem.uacs_code }}</div></div>
-        <div class="row mb-2"><div class="col-6 fw-semibold">Category (UACS):</div><div class="col-6">{{ scannedItem.uacs_category }}</div></div>
-        <div class="row mb-2"><div class="col-6 fw-semibold">Unit Cost:</div><div class="col-6">₱ {{ formatPrice(scannedItem.unit_cost) }}</div></div>
-        <div class="row mb-2"><div class="col-6 fw-semibold">Quantity:</div><div class="col-6">{{ scannedItem.quantity }}</div></div>
-        <div class="row mb-2"><div class="col-6 fw-semibold">Total Cost:</div><div class="col-6">₱ {{ formatPrice(scannedItem.total_cost) }}</div></div>
-        <div class="row mb-2"><div class="col-6 fw-semibold">Unit:</div><div class="col-6">{{ scannedItem.unit }}</div></div>
-        <div class="row mb-2"><div class="col-6 fw-semibold">Location:</div><div class="col-6">{{ scannedItem.location }}</div></div>
-        <div class="row mb-2"><div class="col-6 fw-semibold">Property Number:</div><div class="col-6">{{ scannedItem.property_number }}</div></div>
-        <div class="row mb-2"><div class="col-6 fw-semibold">ICS Number:</div><div class="col-6">{{ scannedItem.ics_number }}</div></div>
-        <div class="row mb-2"><div class="col-6 fw-semibold">Date of PO:</div><div class="col-6">{{ formatDate(scannedItem.date_of_po) }}</div></div>
-        <div class="row mb-2"><div class="col-6 fw-semibold">PO Number:</div><div class="col-6">{{ scannedItem.po_number }}</div></div>
-        <div class="row mb-3"><div class="col-6 fw-semibold">Supplier:</div><div class="col-6">{{ scannedItem.supplier_name }}</div></div>
-
-        <div v-if="scannedItem.qr_code" class="text-center mb-3">
-          <img :src="getFullImageUrl(scannedItem.qr_code)" alt="QR Code" width="100" height="100" class="border rounded" />
+    <div v-else class="card mt-4 shadow-sm p-4">
+      <h5 class="fw-bold text-center mb-4">Scanned Item Details</h5>
+      <div class="row">
+        <!-- LEFT COLUMN: ITEM DETAILS -->
+        <div class="col-md-8">
+          <div class="row mb-2"><div class="col-5 fw-semibold">Date of Acquisition:</div><div class="col-7 text-break">{{ formatDate(scannedItem.date_of_acquisition) }}</div></div>
+          <div class="row mb-2"><div class="col-5 fw-semibold">Accountable Person:</div><div class="col-7 text-break">{{ scannedItem.accountable_person }}</div></div>
+          <div class="row mb-2"><div class="col-5 fw-semibold">Fund:</div><div class="col-7 text-break">{{ scannedItem.fund }}</div></div>
+          <div class="row mb-2"><div class="col-5 fw-semibold">Article:</div><div class="col-7 text-break">{{ scannedItem.article }}</div></div>
+          <div class="row mb-2"><div class="col-5 fw-semibold">Description:</div><div class="col-7 text-break">{{ scannedItem.description }}</div></div>
+          <div class="row mb-2"><div class="col-5 fw-semibold">UACS Code:</div><div class="col-7">{{ scannedItem.uacs_code }}</div></div>
+          <div class="row mb-2"><div class="col-5 fw-semibold">Category (UACS):</div><div class="col-7">{{ scannedItem.uacs_category }}</div></div>
+          <div class="row mb-2"><div class="col-5 fw-semibold">Unit Cost:</div><div class="col-7">₱ {{ formatPrice(scannedItem.unit_cost) }}</div></div>
+          <div class="row mb-2"><div class="col-5 fw-semibold">Quantity:</div><div class="col-7">{{ scannedItem.quantity }}</div></div>
+          <div class="row mb-2"><div class="col-5 fw-semibold">Total Cost:</div><div class="col-7">₱ {{ formatPrice(scannedItem.total_cost) }}</div></div>
+          <div class="row mb-2"><div class="col-5 fw-semibold">Unit:</div><div class="col-7">{{ scannedItem.unit }}</div></div>
+          <div class="row mb-2"><div class="col-5 fw-semibold">Location:</div><div class="col-7">{{ scannedItem.location }}</div></div>
+          <div class="row mb-2"><div class="col-5 fw-semibold">Property Number:</div><div class="col-7">{{ scannedItem.property_number }}</div></div>
+          <div class="row mb-2"><div class="col-5 fw-semibold">ICS Number:</div><div class="col-7">{{ scannedItem.ics_number }}</div></div>
+          <div class="row mb-2"><div class="col-5 fw-semibold">Date of PO:</div><div class="col-7">{{ formatDate(scannedItem.date_of_po) }}</div></div>
+          <div class="row mb-2"><div class="col-5 fw-semibold">PO Number:</div><div class="col-7">{{ scannedItem.po_number }}</div></div>
+          <div class="row mb-3"><div class="col-5 fw-semibold">Supplier:</div><div class="col-7">{{ scannedItem.supplier_name }}</div></div>
         </div>
 
-        <div class="d-flex justify-content-center gap-2">
-          <button class="btn btn-outline-info btn-sm" @click="openEditModal(scannedItem)">
-            <i class="bi bi-pencil-square"></i> Edit Item
-          </button>
-          <button class="btn btn-secondary btn-sm" @click="resetScan">
-            <i class="bi bi-arrow-repeat"></i> Scan Again
-          </button>
+        <!-- RIGHT COLUMN: QR + BUTTONS -->
+        <div class="col-md-4 text-center">
+          <img
+            v-if="scannedItem.qr_code"
+            :src="getFullImageUrl(scannedItem.qr_code)"
+            alt="QR Code"
+            class="img-fluid border p-1 mb-3"
+            style="max-width: 200px;"
+          />
+          <div class="d-flex justify-content-center gap-2">
+            <button class="btn btn-outline-info btn-sm" @click="openEditModal(scannedItem)">
+              <i class="bi bi-pencil-square"></i> Edit Item
+            </button>
+            <button class="btn btn-secondary btn-sm" @click="resetScan">
+              <i class="bi bi-arrow-repeat"></i> Scan Again
+            </button>
+          </div>
         </div>
       </div>
     </div>

@@ -6,6 +6,7 @@
         <img src="@/assets/tesda.png" alt="Logo" class="me-2" height="70" />
         <span class="fw-bold">JZGMSAT</span>
       </router-link>
+
       <!-- TOGGLER (Mobile) -->
       <button
         class="navbar-toggler"
@@ -18,6 +19,7 @@
       >
         <span class="navbar-toggler-icon"></span>
       </button>
+
       <!-- NAV LINKS -->
       <div class="collapse navbar-collapse" id="navbarNav">
         <ul class="navbar-nav ms-auto align-items-center">
@@ -45,7 +47,7 @@
               data-bs-toggle="modal"
               data-bs-target="#logoutModal"
             >
-              <i class="bi bi-box-arrow-right"></i> 
+              <i class="bi bi-box-arrow-right"></i>
             </button>
           </li>
         </ul>
@@ -53,35 +55,24 @@
     </div>
   </nav>
 
-  <!-- Logout Confirmation Modal -->
-  <div
-    class="modal fade"
-    id="logoutModal"
-    tabindex="-1"
-    aria-labelledby="logoutModalLabel"
-    aria-hidden="true"
-  >
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title" id="logoutModalLabel">Confirm Logout</h5>
+  <!-- Smaller Logout Confirmation Modal -->
+  <div class="modal fade" id="logoutModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+      <div class="modal-content rounded-4 p-3 border-0 shadow-sm">
+        <div class="d-flex justify-content-between align-items-start mb-2">
+          <h6 class="fw-bold text-dark mb-0">Confirm Logout</h6>
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
-        <div class="modal-body">
-          Are you sure you want to log out?
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-            Cancel
-          </button>
-          <button
-            type="button"
-            class="btn btn-danger"
-            @click="logout"
-            data-bs-dismiss="modal"
-          >
-            Logout
-          </button>
+        <div class="modal-body text-center px-2 py-1">
+          <p class="text-secondary small mb-3">Are you sure you want to log out?</p>
+          <div class="d-flex justify-content-center gap-2">
+            <button class="btn btn-outline-secondary btn-sm px-3" data-bs-dismiss="modal">
+              Cancel
+            </button>
+            <button class="btn btn-danger btn-sm px-3" @click="logout" data-bs-dismiss="modal">
+              Logout
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -144,5 +135,18 @@ export default {
 .active-route {
   font-weight: bold;
   border-bottom: 2px solid white;
+}
+
+.modal-content {
+  font-family: 'Segoe UI', sans-serif;
+}
+
+.modal-body p {
+  margin: 0;
+  font-size: 14px;
+}
+
+.btn {
+  font-weight: 500;
 }
 </style>
