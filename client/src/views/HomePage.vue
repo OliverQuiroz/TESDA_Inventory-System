@@ -26,21 +26,26 @@
     <div class="d-flex align-items-center gap-2 overflow-auto mb-4" style="white-space: nowrap;">
       <div class="btn-group" role="group">
         <button class="btn btn-outline-secondary btn-sm" :disabled="currentPage === 1" @click="changePage(currentPage - 1)">← Prev</button>
+            <!-- ✅ Insert this line -->
+            <span class="align-self-center px-2 small">
+              Page {{ currentPage }} of {{ totalPages }}
+            </span>
+
         <button class="btn btn-outline-secondary btn-sm" :disabled="currentPage === totalPages" @click="changePage(currentPage + 1)">Next →</button>
       </div>
 
       <input v-model="searchQuery" class="form-control" placeholder="Search" style="width: 1000px; min-width: 250px;" />
 
-      <select v-model="selectedMonth" class="form-select" style="width: 160px;">
+      <select v-model="selectedMonth" class="form-select" style="width: 290px;">
         <option value="">All Months</option>
         <option v-for="m in monthOptions" :key="m.value" :value="m.value">{{ m.label }}</option>
       </select>
 
       <div class="d-flex gap-2">
         <button class="btn btn-outline-secondary btn-sm" @click="downloadPDF" :disabled="!filteredItems.length">
-          <i class="bi bi-download"></i> PDF
+          <i class="bi bi-download"></i> Download PDF
         </button>
-        <button class="btn btn-primary btn-sm" @click="openAddItemModal" style="min-width: 120px;">
+        <button class="btn btn-primary btn-sm" @click="openAddItemModal" style="min-width: 160px;">
           <i class="bi bi-plus-circle"></i> Add Item
         </button>
       </div>
@@ -73,29 +78,30 @@
         </thead>
         <tbody>
           <tr v-for="item in paginatedItems" :key="item.id" class="clickable-row" @click="openModal(item)" :class="{ 'table-success animate-highlight': item.id === updatedItemId }">
-            <td>{{ formatDate(item.date_of_acquisition) }}</td>
-            <td>{{ item.accountable_person }}</td>
-            <td>{{ item.fund }}</td>
-            <td>{{ item.article }}</td>
-            <td class="text-wrap w-desc">{{ truncateText(item.description, 60) }}</td>
-            <td><span class="d-inline-block text-truncate w-110" :title="item.uacs_code">{{ item.uacs_code }}</span></td>
-            <td>{{ item.uacs_category }}</td>
-            <td class="text-end" v-html="formatPriceHTML(item.unit_cost)"></td>
-            <td class="text-end">{{ item.quantity }}</td>
-            <td class="text-end" v-html="formatPriceHTML(item.total_cost)"></td>
-            <td>{{ item.unit }}</td>
-            <td>{{ item.location }}</td>
-            <td><span class="d-inline-block text-truncate w-110" :title="item.property_number">{{ item.property_number }}</span></td>
-            <td>{{ item.ics_number }}</td>
-            <td>{{ formatDate(item.date_of_po) }}</td>
-            <td><span class="d-inline-block text-truncate w-100" :title="item.po_number">{{ item.po_number }}</span></td>
-            <td>{{ item.supplier_name }}</td>
-            <td class="p-1">
-              <button class="btn btn-icon btn-icon-edit btn-outline-info" @click.stop="openEditModalFromTable(item)" title="Edit">
-                <i class="bi bi-pencil-square"></i>
-              </button>
-            </td>
-          </tr>
+          <td>{{ formatDate(item.date_of_acquisition) }}</td>
+          <td class="truncate-cell" :title="item.accountable_person">{{ truncateText(item.accountable_person, 15) }}</td>
+          <td class="truncate-cell" :title="item.fund">{{ truncateText(item.fund, 15) }}</td>
+          <td class="truncate-cell" :title="item.article">{{ truncateText(item.article, 15) }}</td>
+          <td class="truncate-cell" :title="item.description">{{ truncateText(item.description, 15) }}</td>
+          <td class="truncate-cell" :title="item.uacs_code">{{ truncateText(item.uacs_code, 15) }}</td>
+          <td class="truncate-cell" :title="item.uacs_category">{{ truncateText(item.uacs_category, 15) }}</td>
+          <td class="text-end" v-html="formatPriceHTML(item.unit_cost)"></td>
+          <td class="text-end">{{ item.quantity }}</td>
+          <td class="text-end" v-html="formatPriceHTML(item.total_cost)"></td>
+          <td class="truncate-cell" :title="item.unit">{{ truncateText(item.unit, 15) }}</td>
+          <td class="truncate-cell" :title="item.location">{{ truncateText(item.location, 15) }}</td>
+          <td class="truncate-cell" :title="item.property_number">{{ truncateText(item.property_number, 15) }}</td>
+          <td class="truncate-cell" :title="item.ics_number">{{ truncateText(item.ics_number, 15) }}</td>
+          <td>{{ formatDate(item.date_of_po) }}</td>
+          <td class="truncate-cell" :title="item.po_number">{{ truncateText(item.po_number, 15) }}</td>
+          <td class="truncate-cell" :title="item.supplier_name">{{ truncateText(item.supplier_name, 15) }}</td>
+          <td class="p-1">
+            <button class="btn btn-icon btn-icon-edit btn-outline-info" @click.stop="openEditModalFromTable(item)" title="Edit">
+              <i class="bi bi-pencil-square"></i>
+            </button>
+          </td>
+        </tr>
+
           <tr v-if="paginatedItems.length === 0">
             <td colspan="18" class="text-muted text-center">No items found.</td>
           </tr>
@@ -190,6 +196,9 @@ ppeCount() {
   }
 },
   methods: {
+    truncateText(txt, len) {
+      return !txt ? "" : txt.length > len ? txt.slice(0, len) + "…" : txt;
+    },
     async fetchItems(highlightId = null) {
       const res = await fetch("http://127.0.0.1:8000/api/items/");
       if (!res.ok) throw new Error();
@@ -282,33 +291,63 @@ ppeCount() {
     "Property No.", "ICS No.", "PO Date", "PO #", "Supplier"
   ];
   const rows = this.filteredItems.map(item => [
-    this.formatDate(item.date_of_acquisition),
-    item.accountable_person,
-    item.fund,
-    item.article,
-    item.description,
-    item.uacs_code,
-    item.uacs_category,
-    this.formatPlainPrice(item.unit_cost),
-    item.quantity,
-    this.formatPlainPrice(item.total_cost),
-    item.unit,
-    item.location,
-    item.property_number,
-    item.ics_number,
-    this.formatDate(item.date_of_po),
-    item.po_number,
-    item.supplier_name
-  ]);
+  this.formatDate(item.date_of_acquisition),
+  item.accountable_person, // ✅ FULL VALUE here
+  item.fund,
+  item.article,
+  item.description,
+  item.uacs_code,
+  item.uacs_category,
+  this.formatPlainPrice(item.unit_cost),
+  item.quantity,
+  this.formatPlainPrice(item.total_cost),
+  item.unit,
+  item.location,
+  item.property_number,
+  item.ics_number,
+  this.formatDate(item.date_of_po),
+  item.po_number,
+  item.supplier_name
+]);
 
-  autoTable(doc, {
-    head: [headers],
-    body: rows,
-    startY: 28, // start after subtitle
-    styles: { fontSize: 7, cellPadding: 1 },
-    headStyles: { fillColor: [52, 58, 64], textColor: 255 },
-    theme: "grid"
-  });
+autoTable(doc, {
+  head: [headers],
+  body: rows,
+  startY: 28,
+  margin: { top: 30, bottom: 20, left: 6}, 
+  styles: {
+    fontSize: 7,
+    cellPadding: 1,
+    overflow: 'linebreak'  // allows multi-line cell wrapping
+  },
+  headStyles: {
+    fillColor: [52, 58, 64],
+    textColor: 255,
+    halign: 'center'
+  },
+  columnStyles: {
+    0: { cellWidth: 10 },   // Date Acq
+    1: { cellWidth: 20 },   // Person
+    2: { cellWidth: 20 },   // Fund
+    3: { cellWidth: 20 },   // Article
+    4: { cellWidth: 20 },   // Description
+    5: { cellWidth: 20 },   // UACS Code
+    6: { cellWidth: 13 },   // Category
+    7: { cellWidth: 20 },   // Unit Cost
+    8: { cellWidth: 10 },   // Qty
+    9: { cellWidth: 20 },   // Total Cost
+    10: { cellWidth: 10 },  // Unit
+    11: { cellWidth: 13 },  // Location
+    12: { cellWidth: 20 },  // Property No.
+    13: { cellWidth: 20 },  // ICS No.
+    14: { cellWidth: 10 },  // PO Date
+    15: { cellWidth: 20 },  // PO #
+    16: { cellWidth: 20 }   // Supplier
+  },
+  theme: 'grid'
+});
+
+
 
   doc.save("Registered_Items.pdf");
 },
@@ -328,9 +367,25 @@ ppeCount() {
 .btn-icon { padding: 0.23rem 0.35rem; line-height: 1; }
 .btn-icon-edit { font-size: 1rem; padding: 0.4rem 0.35rem; }
 .clickable-row { cursor: pointer; }
-.active-filter { border: 2px solid #cce5ff; background-color: #e7f1ff; box-shadow: 0 0 0 0.1rem #f0f8ff; }
-.filter-card:hover { background: #f8f9fa; transform: scale(1.05); transition: 0.3s; }
+.active-filter {
+  border: 2px solid #007bff;
+  background-color: #007bff;
+  color: white;
+  box-shadow: 0 0 0 0.15rem rgba(0, 123, 255, 0.5);
+}
+
+
+.filter-card:hover { transform: scale(1.05); transition: 0.3s; }
 .animate-highlight { animation: fadeHighlight 0.2s ease-in-out; }
 @keyframes fadeHighlight { 0% { background: #ff94df; } 100% { background: transparent; } }
 .table-wrapper { min-height: 530px; display: flex; flex-direction: column; }
+
+.truncate-cell {
+  max-width: 100px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+
 </style>
